@@ -1,0 +1,27 @@
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="public/css/signin.css">
+</head>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    var socket = io();
+    socket.on('connect', () => {
+        socket.emit('type', 'login');
+        socket.on("test", function(msg){
+            document.getElementById("text").textContent="msg from mqtt";
+            console.log(msg);
+        })
+    })
+</script>
+
+
+<body>
+    <p id="text"> hello </p>
+</body>
+
+</html>
