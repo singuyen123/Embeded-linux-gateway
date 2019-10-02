@@ -12,8 +12,8 @@
     var socket = io();
     socket.on('connect', () => {
         socket.emit('type', 'login');
-        socket.on("test", function(msg){
-            document.getElementById("text").textContent="msg from mqtt";
+        socket.on("USB", function (msg) {
+            document.getElementById("text").textContent = msg;
             console.log(msg);
         })
     })
