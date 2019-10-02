@@ -9,6 +9,14 @@ var http = require('http');					//#include thu vien http -
 var socketio = require('socket.io');			//#include thu vien socketio
 var server = http.createServer(app);
 var io = socketio(server);
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://localhost:27017/linux-gateway";
+
+MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
+  if (err) throw err;
+  console.log("Database created!");
+  db.close();
+});
 
 server.listen(PORT, function () {
   console.log("Server running at address: " + ip.address() + ":" + PORT)
@@ -22,10 +30,10 @@ var mqtt = require('mqtt')
 var mqtt_client = mqtt.connect('mqtt://test.mosquitto.org')
 
 mqtt_client.on('connect', function () {
-  mqtt_client.subscribe('presence', function (err) {
+  mqtt_client.subscribe('USB', function (err) {
     
     if (!err) {
-      mqtt_client.publish('presence', 'Hello mqtt');
+      mqtt_client.publish('USB', 'Hello mqtt');
     }
   })
 })
@@ -34,7 +42,7 @@ mqtt_client.on('message', function (topic, message) {
   // message is Buffer
   console.log(message.toString())
   allWebClients.forEach(function(socket) {
-    socket.emit("test", "msg from mqtt");
+    socket.emit("USB", message);
   })
 })
 
