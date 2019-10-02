@@ -8,34 +8,55 @@
 #include <linux/i2c-dev.h>
 #include <smbus.h>
 #include "i2cbusses.h"
-#include "version.h"
 #include "i2c.h"
+#include <fcntl.h>
 
 #define MODE_AUTO	0
 #define MODE_QUICK	1
 #define MODE_READ	2
-#define MODE_FUNC	3
 #define MODE MODE_AUTO
 #define FIRST 0x03
 #define LAST  0x77
 #define I2CBUS  0
+
 volatile int address=0;
-volatile int address1=0;
+static const char *device = "/dev/i2c-0";
+const char key[4]={1,9,9,7};
+int wiringPiI2CSetupInterface (const char *device, int devId)
+{
+  int fd ;
 
+  if ((fd = open (device, O_RDWR)) < 0)
+  {
+    fprintf(stderr, "I2C: Failed to access %d\n", device);
+    exit(1);
 
-static int scan_i2c_bus(int file, int mode, unsigned long funcs,
-			int first, int last)
+  }
+    
+
+  if (ioctl (fd, I2C_SLAVE, devId) < 0)
+  {
+    fprintf(stderr, "I2C: Failed to acquire bus access/talk to slave 0x%x\n", devId);
+    exit(1);
+  }
+  return fd ;
+}
+
+static int scan_i2c_bus(int mode,int first, int last)
 {
 	int i, j;
 	int cmd, res;
-
-//	printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n");
+	int file;
+	//char filename[20];
+	//file = open_i2c_dev(I2CBUS, filename, sizeof(filename), 0);
+	file=open (device, O_RDWR);
+	if (file < 0) {
+		exit(1);
+	}
 
 	for (i = 0; i < 128; i += 16) {
-	//	printf("%02x: ", i);
 		for(j = 0; j < 16; j++) {
 			fflush(stdout);
-
 			/* Select detection command for this address */
 			switch (mode) {
 			default:
@@ -78,92 +99,42 @@ static int scan_i2c_bus(int file, int mode, unsigned long funcs,
 				break;
 			}
 
-			//if (res < 0)
-			//	printf("-- ");
-			//else{
 			if(res>=0){
-				//printf("%02x ", i+j);
-				address=i;
-				address1=j;
+				address=i+j;
 			}
 		}
-	//	printf("\n");
 	}
-
+	close(file);
 	return 0;
 }
-
-struct func
-{
-	long value;
-	const char* name;
-};
-
-static const struct func all_func[] = {
-	{ .value = I2C_FUNC_I2C,
-	  .name = "I2C" },
-	{ .value = I2C_FUNC_SMBUS_QUICK,
-	  .name = "SMBus Quick Command" },
-	{ .value = I2C_FUNC_SMBUS_WRITE_BYTE,
-	  .name = "SMBus Send Byte" },
-	{ .value = I2C_FUNC_SMBUS_READ_BYTE,
-	  .name = "SMBus Receive Byte" },
-	{ .value = I2C_FUNC_SMBUS_WRITE_BYTE_DATA,
-	  .name = "SMBus Write Byte" },
-	{ .value = I2C_FUNC_SMBUS_READ_BYTE_DATA,
-	  .name = "SMBus Read Byte" },
-	{ .value = I2C_FUNC_SMBUS_WRITE_WORD_DATA,
-	  .name = "SMBus Write Word" },
-	{ .value = I2C_FUNC_SMBUS_READ_WORD_DATA,
-	  .name = "SMBus Read Word" },
-	{ .value = I2C_FUNC_SMBUS_PROC_CALL,
-	  .name = "SMBus Process Call" },
-	{ .value = I2C_FUNC_SMBUS_WRITE_BLOCK_DATA,
-	  .name = "SMBus Block Write" },
-	{ .value = I2C_FUNC_SMBUS_READ_BLOCK_DATA,
-	  .name = "SMBus Block Read" },
-	{ .value = I2C_FUNC_SMBUS_BLOCK_PROC_CALL,
-	  .name = "SMBus Block Process Call" },
-	{ .value = I2C_FUNC_SMBUS_PEC,
-	  .name = "SMBus PEC" },
-	{ .value = I2C_FUNC_SMBUS_WRITE_I2C_BLOCK,
-	  .name = "I2C Block Write" },
-	{ .value = I2C_FUNC_SMBUS_READ_I2C_BLOCK,
-	  .name = "I2C Block Read" },
-	{ .value = 0, .name = "" }
-};
-
 
 
 int main(int argc, char *argv[])
 {
-
-	int file, res;
-	char filename[20];
-	unsigned long funcs;
-
-
-
-	file = open_i2c_dev(I2CBUS, filename, sizeof(filename), 0);
-	if (file < 0) {
-		exit(1);
-	}
-
-	if (ioctl(file, I2C_FUNCS, &funcs) < 0) {
-		fprintf(stderr, "Error: Could not get the adapter "
-			"functionality matrix: %s\n", strerror(errno));
-		close(file);
-		exit(1);
-	}
-
-
-	res = scan_i2c_bus(file, MODE, funcs, FIRST, LAST);
-	if(res)
+	if(scan_i2c_bus(MODE, FIRST, LAST))
 	{
 		exit(1);
 	}
-	printf("value return d:%02x\n",address+address1);
-	close(file);
-	return 0;
+
+   int fd=wiringPiI2CSetupInterface(device,address);
+   if(fd<0)
+   {
+      printf("I2C Fail\n");
+   }
+  while(1)
+  {
+    write(fd, key, 4);
+	break;
+  }
+
+  close(fd);
+  return (EXIT_SUCCESS);
+	// printf("value return d:%02x\n",address);
+	// if(0x08==address)
+	// {
+	// 	printf("cho thi");
+	// }
+
+	// return 0;
 
 }
