@@ -7,6 +7,7 @@
 #include <time.h>
 #include <sys/socket.h>
 #include <syslog.h>
+#include <poll.h>
 
 #define MAX 80
 #define PORT 6997
