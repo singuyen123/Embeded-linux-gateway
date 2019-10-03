@@ -56,8 +56,6 @@ int main() {
     FILE *f = popen("mount | grep /dev/sdb1", "r");
     if (NULL != f)
     {
-      /* test if something has been outputed by 
-           the command */
       if (EOF == fgetc(f))
       {
         puts("/dev/sdb1 is NOT mounted");

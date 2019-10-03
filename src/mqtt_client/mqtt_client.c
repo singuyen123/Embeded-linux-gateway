@@ -6,6 +6,8 @@
 #include <netinet/in.h>
 #include <linux/netlink.h>
 #include <pthread.h>
+#include <poll.h>
+#include <errno.h>
 #include "syslog.h"
 #include "MQTTClient.h"
 
@@ -33,7 +35,8 @@ int rc;
 int ch;
 
 /* code netlink*/
-void *netlink_rev(void *netlink_user) {
+void *netlink_rev(void *netlink_user)
+{
   struct sockaddr_nl src_addr, dest_addr;
   struct nlmsghdr *nlh = NULL;
   struct iovec iov;
@@ -76,7 +79,8 @@ void *netlink_rev(void *netlink_user) {
   syslog(LOG_INFO, "Waiting for message from kernel\n");
 
   /* Read message from kernel */
-  while (1) {
+  while (1)
+  {
     recvmsg(sock_fd, &msg, 0);
     printf("Received message payload: %s\n", (char *)NLMSG_DATA(nlh));
   }
@@ -86,30 +90,18 @@ void *netlink_rev(void *netlink_user) {
 /* end code netlink*/
 
 /* code socket TCP*/
-void func(int sockfd) {
-  char buff[MAX];
-  int n;
-  // infinite loop for chat
-  for (;;) {
-    bzero(buff, MAX);
 
-    // read the message from client and copy it in buffer
-    read(sockfd, buff, sizeof(buff));
-    // print buffer which contains the client contents
-    if (strncmp(buff, "usb", 3) == 0) {
-      subscribe_topic("USB", "usb detected");
-    }
-    n = 0;
-  }
-}
-
-void *run_socket_tcp() {
+void *run_socket_tcp()
+{
   int sockfd, connfd, len;
   struct sockaddr_in servaddr, cli;
+  struct pollfd poll_list[2];
+  int nfds = 1, poll_rc;
 
   // socket create and verification
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd == -1) {
+  if (sockfd == -1)
+  {
     syslog(LOG_ERR, "socket creation failed...\n");
     exit(0);
   }
@@ -123,7 +115,8 @@ void *run_socket_tcp() {
   servaddr.sin_port = htons(PORT_TCP);
 
   // Binding newly created socket to given IP and verification
-  if ((bind(sockfd, (SA *)&servaddr, sizeof(servaddr))) != 0) {
+  if ((bind(sockfd, (SA *)&servaddr, sizeof(servaddr))) != 0)
+  {
     syslog(LOG_ERR, "socket bind failed...\n");
     exit(0);
   }
@@ -131,7 +124,8 @@ void *run_socket_tcp() {
     syslog(LOG_INFO, "Socket successfully binded..\n");
 
   // Now server is ready to listen and verification
-  if ((listen(sockfd, 5)) != 0) {
+  if ((listen(sockfd, 5)) != 0)
+  {
     syslog(LOG_ERR, "Listen failed...\n");
     exit(0);
   }
@@ -139,31 +133,59 @@ void *run_socket_tcp() {
     syslog(LOG_INFO, "Server listening..\n");
   len = sizeof(cli);
 
+  poll_list[0].fd = sockfd;
+  poll_list[0].events = POLLIN;
+
   // Accept the data packet from client and verification
-  connfd = accept(sockfd, (SA *)&cli, &len);
-  if (connfd < 0) {
-    syslog(LOG_ERR, "server acccept failed...\n");
-    exit(0);
+
+  while (1)
+  {
+    poll_rc = poll(poll_list, nfds, -1);
+    if (poll_rc < 0)
+    {
+      syslog(LOG_ERR, "poll error");
+      if (errno == EINTR)
+        continue;
+      break;
+    }
+    for (int i = 0; i < nfds; i++)
+    {
+      if (poll_list[0].revents & POLLIN)
+      {
+        connfd = accept(sockfd, (SA *)&cli, &len);
+        if (connfd < 0)
+        {
+          syslog(LOG_ERR, "server acccept failed...\n");
+          exit(0);
+        }
+        else
+          syslog(LOG_INFO, "server acccept the client...\n");
+        nfds++;
+      }
+      if (poll_list[i].revents & POLLIN)
+      {
+        poll_rc = send(poll_list[i].fd, "abc", sizeof("abc"),0);
+        if(poll_rc <= 0) {
+          close(poll_list[i].fd);
+        }
+      }
+    }
   }
-  else
-    syslog(LOG_INFO, "server acccept the client...\n");
-
-  // Function for chatting between client and server
-  func(connfd);
-
-  // After chatting close the socket
+  syslog(LOG_INFO, "server exit");
   close(sockfd);
 }
 /* end code socket TCP */
 
 volatile MQTTClient_deliveryToken deliveredtoken;
 
-void delivered(void *context, MQTTClient_deliveryToken dt) {
+void delivered(void *context, MQTTClient_deliveryToken dt)
+{
   syslog(LOG_INFO, "Message with token value %d delivery confirmed\n", dt);
   deliveredtoken = dt;
 }
 
-int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
+int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
+{
   int i;
   char *payloadptr;
 
@@ -172,7 +194,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   syslog(LOG_INFO, "   message: ");
 
   payloadptr = message->payload;
-  for (i = 0; i < message->payloadlen; i++) {
+  for (i = 0; i < message->payloadlen; i++)
+  {
     putchar(*payloadptr++);
   }
   putchar('\n');
@@ -181,12 +204,14 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   return 1;
 }
 
-void connlost(void *context, char *cause) {
+void connlost(void *context, char *cause)
+{
   syslog(LOG_INFO, "\nConnection lost\n");
   syslog(LOG_INFO, "     cause: %s\n", cause);
 }
 
-void subscribe_topic(char *topic, char *msg) {
+void subscribe_topic(char *topic, char *msg)
+{
   MQTTClient_subscribe(client, topic, QOS);
 
   pubmsg.payload = msg;
@@ -200,14 +225,16 @@ void subscribe_topic(char *topic, char *msg) {
   rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
   syslog(LOG_INFO, "Message with delivery token %d delivered\n", token);
 
-  do {
+  do
+  {
     ch = getchar();
   } while (ch != 'Q' && ch != 'q');
 
   MQTTClient_unsubscribe(client, topic);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   pthread_t thread_netlink1, thread_netlink2, thread_TCP;
 
   MQTTClient_create(&client, ADDRESS, CLIENTID,
@@ -217,7 +244,8 @@ int main(int argc, char *argv[]) {
 
   MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, delivered);
 
-  if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS) {
+  if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
+  {
     syslog(LOG_ERR, "Failed to connect, return code %d\n", rc);
     exit(EXIT_FAILURE);
   }
