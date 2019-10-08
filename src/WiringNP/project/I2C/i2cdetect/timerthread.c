@@ -22,9 +22,9 @@
  #include <signal.h>
  #include <time.h>
  #include <pthread.h>
- //#include "curr_time.h"              /* Declares currTime() */
- //#include "tlpi_hdr.h"
- //#include "itimerspec_from_str.h"    /* Declares itimerspecFromStr() */
+ #include "curr_time.h"              /* Declares currTime() */
+ #include "tlpi_hdr.h"
+ #include "itimerspec_from_str.h"    /* Declares itimerspecFromStr() */
  
  static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
  static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;

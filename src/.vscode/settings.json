@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "string": "cpp",
+        "i2c.h": "c",
+        "i2cbusses.h": "c",
+        "types.h": "c"
+    }
+}
