@@ -108,15 +108,21 @@ void *threadfunction2(void *args)
   while (1)
   {
     memset(&recevie, '\0', sizeof(recevie));
+
+    pthread_mutex_lock(&mutexsum);
     int num_bytes = read(fd, &recevie, sizeof(recevie));
+    pthread_mutex_unlock(&mutexsum);
+
     // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
     if (num_bytes < 0)
     {
-      printf("Error reading1: %s\n", strerror(errno));
+      printf("Device don't Detected\n");
+      //printf("Error reading1: %s\n", strerror(errno));
       pthread_mutex_lock(&mutexsum);
       a = 0;
       close(fd);
       pthread_mutex_unlock(&mutexsum);
+      // continue;
     }
     else
     {
@@ -131,9 +137,13 @@ void *threadfunction2(void *args)
     {
       printf("nhay vao whilea\n");
       memset(&recevie, '\0', sizeof(recevie));
-      num_bytes = read(fd, &recevie, sizeof(recevie));
+
+      pthread_mutex_lock(&mutexsum);
+      int num_bytes1 = read(fd, &recevie, sizeof(recevie));
+      pthread_mutex_unlock(&mutexsum);
+
       // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
-      if (num_bytes < 0)
+      if (num_bytes1 < 0)
       {
         printf("Error reading2: %s", strerror(errno));
 
@@ -142,9 +152,11 @@ void *threadfunction2(void *args)
 
         close(fd);
         pthread_mutex_unlock(&mutexsum);
+        // continue;
       }
       else
       {
+
         if (recevie[0] == '9' && recevie[1] == '7')
         {
           //printf("Read %i bytes. Received message: %s\n", num_bytes, recevie);
@@ -155,10 +167,11 @@ void *threadfunction2(void *args)
           //printf("Read %i bytes. Received message: %s\n", num_bytes, recevie);
           printf("send data********************************************************************** \n");
         }
+        sleep(1);
       }
-    //  usleep(5000);
+     
     }
-    //if (recevie[0] == '9' && recevie[1] == '7')
+
     sleep(2);
   }
 }
@@ -166,7 +179,7 @@ int main(int argc, char *argv[])
 {
   int rc;
   int ret;
-  int count = 2;
+  int count = 3;
   struct pollfd fds[1];
   fds[0].fd = sockfd;
   fds[0].events = POLLIN;
@@ -193,11 +206,14 @@ int main(int argc, char *argv[])
     if (rc == 0)
     {
 
-      printf("start detect\n");
-      count = (count + 1) % 3;
+      printf("start detect>>>>>>>>>>>>>>\n");
+      count = (count + 1) % 4;
       if (count == 0)
       {
-        if (ioctl(fd, I2C_SLAVE, address) < 0)
+        pthread_mutex_lock(&mutexsum);
+        int ac1 = ioctl(fd, I2C_SLAVE, address);
+        pthread_mutex_unlock(&mutexsum);
+        if (ac1 < 0)
         {
           pthread_mutex_lock(&mutexsum);
           fd = open(device, O_RDWR);
@@ -207,9 +223,12 @@ int main(int argc, char *argv[])
         }
         else
         {
-          printf("before write1\n");
-          int k = write(fd, &key, sizeof(key));
-          if (k < 0)
+          printf("Enter write1\n");
+          pthread_mutex_lock(&mutexsum);
+          int k1 = write(fd, &key, sizeof(key));
+          pthread_mutex_unlock(&mutexsum);
+
+          if (k1 < 0)
           {
             printf("Write fail1\n");
           }
@@ -218,7 +237,10 @@ int main(int argc, char *argv[])
       }
       else
       {
-        if (ioctl(fd, I2C_SLAVE, address) < 0)
+        pthread_mutex_lock(&mutexsum);
+        int ac2 = ioctl(fd, I2C_SLAVE, address);
+        pthread_mutex_unlock(&mutexsum);
+        if (ac2 < 0)
         {
           pthread_mutex_lock(&mutexsum);
           fd = open(device, O_RDWR);
@@ -228,9 +250,13 @@ int main(int argc, char *argv[])
         }
         else
         {
-          printf("before write2\n");
-          int k = write(fd, &requestData, sizeof(requestData));
-          if (k < 0)
+          printf("Enter write2\n");
+
+          pthread_mutex_lock(&mutexsum);
+          int k2 = write(fd, &requestData, sizeof(requestData));
+          pthread_mutex_unlock(&mutexsum);
+
+          if (k2 < 0)
           {
             printf("Write fail2\n");
           }
