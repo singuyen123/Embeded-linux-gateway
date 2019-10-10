@@ -6,10 +6,9 @@
 #include <netinet/in.h>
 #include <linux/netlink.h>
 #include <pthread.h>
-#include <poll.h>
-#include <errno.h>
 #include "syslog.h"
 #include "MQTTClient.h"
+#include <errno.h>
 
 /* define for mqtt_client */
 #define ADDRESS "test.mosquitto.org"
@@ -20,7 +19,7 @@
 #define TIMEOUT 10000L
 /* define for socket TCP*/
 #define MAX 80
-#define PORT_TCP 6997
+#define PORT_TCP 1000
 #define SA struct sockaddr
 /* define for netlink*/
 #define NETLINK_USER 31
@@ -74,9 +73,9 @@ void *netlink_rev(void *netlink_user)
   msg.msg_iov = &iov;
   msg.msg_iovlen = 1;
 
-  syslog(LOG_INFO, "Sending message to kernel\n");
+  printf("Sending message to kernel\n");
   sendmsg(sock_fd, &msg, 0);
-  syslog(LOG_INFO, "Waiting for message from kernel\n");
+  printf("Waiting for message from kernel\n");
 
   /* Read message from kernel */
   while (1)
@@ -90,23 +89,40 @@ void *netlink_rev(void *netlink_user)
 /* end code netlink*/
 
 /* code socket TCP*/
+void func(int sockfd)
+{
+  char buff[MAX];
+  int n;
+  // infinite loop for chat
+  for (;;)
+  {
+    bzero(buff, MAX);
+
+    // read the message from client and copy it in buffer
+    read(sockfd, buff, sizeof(buff));
+    // print buffer which contains the client contents
+    if (strncmp(buff, "usb", 3) == 0)
+    {
+      subscribe_topic("USB", "usb detected");
+    }
+    n = 0;
+  }
+}
 
 void *run_socket_tcp()
 {
   int sockfd, connfd, len;
   struct sockaddr_in servaddr, cli;
-  struct pollfd poll_list[2];
-  int nfds = 1, poll_rc;
 
   // socket create and verification
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd == -1)
   {
-    syslog(LOG_ERR, "socket creation failed...\n");
+    printf("socket creation failed...\n");
     exit(0);
   }
   else
-    syslog(LOG_INFO, "Socket successfully created..\n");
+    printf("Socket successfully created..\n");
   bzero(&servaddr, sizeof(servaddr));
 
   // assign IP, PORT
@@ -115,63 +131,40 @@ void *run_socket_tcp()
   servaddr.sin_port = htons(PORT_TCP);
 
   // Binding newly created socket to given IP and verification
-  if ((bind(sockfd, (SA *)&servaddr, sizeof(servaddr))) != 0)
+  int rc = (bind(sockfd, (SA *)&servaddr, sizeof(servaddr)));
+  printf("rc=%d", rc);
+  if (rc != 0)
   {
-    syslog(LOG_ERR, "socket bind failed...\n");
+    printf("socket bind failed...:%s\n", strerror(errno));
     exit(0);
   }
   else
-    syslog(LOG_INFO, "Socket successfully binded..\n");
+    printf("Socket successfully binded..\n");
 
   // Now server is ready to listen and verification
   if ((listen(sockfd, 5)) != 0)
   {
-    syslog(LOG_ERR, "Listen failed...\n");
+    printf("Listen failed...\n");
     exit(0);
   }
   else
-    syslog(LOG_INFO, "Server listening..\n");
+    printf("Server listening..\n");
   len = sizeof(cli);
 
-  poll_list[0].fd = sockfd;
-  poll_list[0].events = POLLIN;
-
   // Accept the data packet from client and verification
-
-  while (1)
+  connfd = accept(sockfd, (SA *)&cli, &len);
+  if (connfd < 0)
   {
-    poll_rc = poll(poll_list, nfds, -1);
-    if (poll_rc < 0)
-    {
-      syslog(LOG_ERR, "poll error");
-      if (errno == EINTR)
-        continue;
-      break;
-    }
-    for (int i = 0; i < nfds; i++)
-    {
-      if (poll_list[0].revents & POLLIN)
-      {
-        connfd = accept(sockfd, (SA *)&cli, &len);
-        if (connfd < 0)
-        {
-          syslog(LOG_ERR, "server acccept failed...\n");
-          exit(0);
-        }
-        else
-          syslog(LOG_INFO, "server acccept the client...\n");
-        nfds++;
-      }
-      if (poll_list[i].revents & POLLIN)
-      {
-        poll_rc = send(poll_list[i].fd, "abc", sizeof("abc"),0);
-        if(poll_rc <= 0) {
-          close(poll_list[i].fd);
-        }
-      }
-    }
+    printf("server acccept failed...\n");
+    exit(0);
   }
-  syslog(LOG_INFO, "server exit");
+  else
+    printf("server acccept the client...\n");
+
+  // Function for chatting between client and server
+  func(connfd);
+
+  // After chatting close the socket
   close(sockfd);
 }
 /* end code socket TCP */
@@ -180,7 +173,7 @@ volatile MQTTClient_deliveryToken deliveredtoken;
 
 void delivered(void *context, MQTTClient_deliveryToken dt)
 {
-  syslog(LOG_INFO, "Message with token value %d delivery confirmed\n", dt);
+  printf("Message with token value %d delivery confirmed\n", dt);
   deliveredtoken = dt;
 }
 
@@ -189,9 +182,9 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   int i;
   char *payloadptr;
 
-  syslog(LOG_INFO, "Message arrived\n");
-  syslog(LOG_INFO, "     topic: %s\n", topicName);
-  syslog(LOG_INFO, "   message: ");
+  printf("Message arrived\n");
+  printf("     topic: %s\n", topicName);
+  printf("   message: ");
 
   payloadptr = message->payload;
   for (i = 0; i < message->payloadlen; i++)
@@ -206,8 +199,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 
 void connlost(void *context, char *cause)
 {
-  syslog(LOG_INFO, "\nConnection lost\n");
-  syslog(LOG_INFO, "     cause: %s\n", cause);
+  printf("\nConnection lost\n");
+  printf("     cause: %s\n", cause);
 }
 
 void subscribe_topic(char *topic, char *msg)
@@ -219,11 +212,11 @@ void subscribe_topic(char *topic, char *msg)
   pubmsg.qos = QOS;
   pubmsg.retained = 0;
   MQTTClient_publishMessage(client, topic, &pubmsg, &token);
-  syslog(LOG_INFO, "Waiting for up to %d seconds for publication of %s\n"
-                   "on topic %s for client with ClientID: %s\n",
+  printf("Waiting for up to %d seconds for publication of %s\n"
+         "on topic %s for client with ClientID: %s\n",
          (int)(TIMEOUT / 1000), PAYLOAD, topic, CLIENTID);
   rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-  syslog(LOG_INFO, "Message with delivery token %d delivered\n", token);
+  printf("Message with delivery token %d delivered\n", token);
 
   do
   {
@@ -246,24 +239,24 @@ int main(int argc, char *argv[])
 
   if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
   {
-    syslog(LOG_ERR, "Failed to connect, return code %d\n", rc);
+    printf("Failed to connect, return code %d\n", rc);
     exit(EXIT_FAILURE);
   }
-  syslog(LOG_INFO, "Subscribing to topic %s\nfor client %s using QoS%d\n\n"
-                   "Press Q<Enter> to quit\n\n",
+  printf("Subscribing to topic %s\nfor client %s using QoS%d\n\n"
+         "Press Q<Enter> to quit\n\n",
          TOPIC, CLIENTID, QOS);
   pthread_create(&thread_netlink1, NULL, netlink_rev, "31");
   pthread_create(&thread_netlink2, NULL, netlink_rev, "21");
-  pthread_create(&thread_TCP, NULL, run_socket_tcp, NULL);
+  // pthread_create(&thread_TCP, NULL, run_socket_tcp, NULL);
 
   pthread_join(thread_netlink1, NULL);
   pthread_join(thread_netlink2, NULL);
   run_socket_tcp();
+  while (1)
+    ;
 
   MQTTClient_disconnect(client, 10000);
   MQTTClient_destroy(&client);
 
-  while (1)
-    ;
   return rc;
 }
