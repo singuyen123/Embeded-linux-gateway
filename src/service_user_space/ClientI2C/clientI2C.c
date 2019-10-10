@@ -6,15 +6,16 @@
 #include <unistd.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
-#include "smbus.h"
 #include <poll.h>
 #include <fcntl.h>
 #include <syslog.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <pthread.h>
-#include "i2cbusses.h"
-#include "i2c.h"
+#include "src/i2cbusses.h"
+#include "src/i2c.h"
+#include "src/smbus.h"
+
 
 #define I2CBUS 0
 
@@ -25,8 +26,8 @@
 
 int sockfd, connfd;
 static const char *device = "/dev/i2c-0";
-const char key[5] = {'1', '9', '9', '7', '.'};
-const char requestData[3] = {'d', 'a', '*'};
+ char key[5] = {'1', '9', '9', '7', '.'};
+  char requestData[3] = {'d', 'a', '*'};
 char recevie[2];
 volatile int fd;
 int a = 0;
@@ -36,7 +37,7 @@ int address = 9;
 pthread_t id1;
 
 /*thread function definition*/
-
+void sendRequestToNode(const char b[],int length);
 void *threadfunction2(void *args);
 void *threadFunction1(void *args);
 pthread_mutex_t mutexsum;
@@ -169,10 +170,37 @@ void *threadfunction2(void *args)
         }
         sleep(1);
       }
-     
     }
 
     sleep(2);
+  }
+}
+
+void sendRequestToNode(const char b[],int length)
+{
+  pthread_mutex_lock(&mutexsum);
+  int ac1 = ioctl(fd, I2C_SLAVE, address);
+  pthread_mutex_unlock(&mutexsum);
+  if (ac1 < 0)
+  {
+    pthread_mutex_lock(&mutexsum);
+    fd = open(device, O_RDWR);
+    a = 0;
+    pthread_mutex_unlock(&mutexsum);
+    fprintf(stderr, "I2C: Failed to acquire bus access/talk to slave 0x%x\n", address);
+  }
+  else
+  {
+    printf("Enter write\n");
+    pthread_mutex_lock(&mutexsum);
+    int k1 = write(fd, b, length);
+    pthread_mutex_unlock(&mutexsum);
+
+    if (k1 < 0)
+    {
+      printf("Write fail\n");
+    }
+    fflush(stdout);
   }
 }
 int main(int argc, char *argv[])
@@ -210,58 +238,60 @@ int main(int argc, char *argv[])
       count = (count + 1) % 4;
       if (count == 0)
       {
-        pthread_mutex_lock(&mutexsum);
-        int ac1 = ioctl(fd, I2C_SLAVE, address);
-        pthread_mutex_unlock(&mutexsum);
-        if (ac1 < 0)
-        {
-          pthread_mutex_lock(&mutexsum);
-          fd = open(device, O_RDWR);
-          a = 0;
-          pthread_mutex_unlock(&mutexsum);
-          fprintf(stderr, "I2C: Failed to acquire bus access/talk to slave 0x%x\n", address);
-        }
-        else
-        {
-          printf("Enter write1\n");
-          pthread_mutex_lock(&mutexsum);
-          int k1 = write(fd, &key, sizeof(key));
-          pthread_mutex_unlock(&mutexsum);
+        sendRequestToNode(key,sizeof(key));
+        // pthread_mutex_lock(&mutexsum);
+        // int ac1 = ioctl(fd, I2C_SLAVE, address);
+        // pthread_mutex_unlock(&mutexsum);
+        // if (ac1 < 0)
+        // {
+        //   pthread_mutex_lock(&mutexsum);
+        //   fd = open(device, O_RDWR);
+        //   a = 0;
+        //   pthread_mutex_unlock(&mutexsum);
+        //   fprintf(stderr, "I2C: Failed to acquire bus access/talk to slave 0x%x\n", address);
+        // }
+        // else
+        // {
+        //   printf("Enter write1\n");
+        //   pthread_mutex_lock(&mutexsum);
+        //   int k1 = write(fd, &key, sizeof(key));
+        //   pthread_mutex_unlock(&mutexsum);
 
-          if (k1 < 0)
-          {
-            printf("Write fail1\n");
-          }
-          fflush(stdout);
-        }
+        //   if (k1 < 0)
+        //   {
+        //     printf("Write fail1\n");
+        //   }
+        //   fflush(stdout);
+        // }
       }
       else
       {
-        pthread_mutex_lock(&mutexsum);
-        int ac2 = ioctl(fd, I2C_SLAVE, address);
-        pthread_mutex_unlock(&mutexsum);
-        if (ac2 < 0)
-        {
-          pthread_mutex_lock(&mutexsum);
-          fd = open(device, O_RDWR);
-          a = 0;
-          pthread_mutex_unlock(&mutexsum);
-          fprintf(stderr, "I2C: Failed to acquire bus access/talk to slave 0x%x\n", address);
-        }
-        else
-        {
-          printf("Enter write2\n");
+        sendRequestToNode(requestData,sizeof(requestData));
+        // pthread_mutex_lock(&mutexsum);
+        // int ac2 = ioctl(fd, I2C_SLAVE, address);
+        // pthread_mutex_unlock(&mutexsum);
+        // if (ac2 < 0)
+        // {
+        //   pthread_mutex_lock(&mutexsum);
+        //   fd = open(device, O_RDWR);
+        //   a = 0;
+        //   pthread_mutex_unlock(&mutexsum);
+        //   fprintf(stderr, "I2C: Failed to acquire bus access/talk to slave 0x%x\n", address);
+        // }
+        // else
+        // {
+        //   printf("Enter write2\n");
 
-          pthread_mutex_lock(&mutexsum);
-          int k2 = write(fd, &requestData, sizeof(requestData));
-          pthread_mutex_unlock(&mutexsum);
+        //   pthread_mutex_lock(&mutexsum);
+        //   int k2 = write(fd, &requestData, sizeof(requestData));
+        //   pthread_mutex_unlock(&mutexsum);
 
-          if (k2 < 0)
-          {
-            printf("Write fail2\n");
-          }
-          fflush(stdout);
-        }
+        //   if (k2 < 0)
+        //   {
+        //     printf("Write fail2\n");
+        //   }
+        //   fflush(stdout);
+        // }
       }
     }
   }
