@@ -3,10 +3,12 @@ OBJSDIR	=	./src
 # Source, Executable, Includes, Library DefinesCC=gcc
 INCL   +=  ./src/i2c.h \
 			./src/i2cbusses.h  \
-			./src/smbus.h
+			./src/smbus.h	\
+			./src/timer.h
 
 SRC    += 	./src/smbus.c  \
 			./src/i2cbusses.c	\
+			./src/timer.c	\
 			 clientI2C.c 
 			 
 OBJ = $(SRC:.c=.o)

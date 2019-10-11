@@ -15,7 +15,7 @@
 #include "src/i2cbusses.h"
 #include "src/i2c.h"
 #include "src/smbus.h"
-
+#include "src/timer.h"
 
 #define I2CBUS 0
 
@@ -25,44 +25,56 @@
 #define SA struct sockaddr
 
 int sockfd, connfd;
-
+int var;
 /*Variable I2c*/
 static const char *device = "/dev/i2c-0";
- char key[5] = {'1', '9', '9', '7', '.'};
-  char requestData[3] = {'d', 'a', '*'};
-  static const char *msg_send_key = "send ACK to I2C";
+char key[5] = {'1', '9', '9', '7', '.'};
+char requestData[3] = {'d', 'a', '*'};
+static const char *msg_send_key = "send ACK to I2C";
 static const char *msg_req_data = "send request data to I2C";
 char recevie[2];
 volatile int fd;
 int a = 0;
 const char keyre[2] = {'9', '7'};
 const char ask[2] = "OK";
-int address = 9;
+volatile int address=-1;
 pthread_t id1;
-
+int check = 0;
 /*thread function definition*/
-void sendRequestToNode(const char b[],int length,const char *msg);
+void sendRequestToNode(const char b[], int length, const char *msg);
 void *threadfunction2(void *args);
-void *threadFunction1(void *args);
+void timer_handler(void);
 pthread_mutex_t mutexsum;
 
 int scan_address(int file)
 {
+  printf("Start scan address\n");
   int i, res, flag = 0;
   for (i = 0; i < 128; i++)
   {
-    if (ioctl(file, I2C_SLAVE, i) < 0)
+    if (var > 5)
     {
-      printf("Don't access\n");
+      check = 1;
+      var = 0;
+      //stop_timer();
+      printf("Device don't Detected after scan\n");
+      break;
     }
-    if ((i >= 0x30 && i <= 0x37) || (i >= 0x50 && i <= 0x5F))
-      res = i2c_smbus_read_byte(file);
     else
-      res = i2c_smbus_write_quick(file, I2C_SMBUS_WRITE);
-    if (res >= 0)
     {
-      address = i;
-      flag++;
+      if (ioctl(file, I2C_SLAVE, i) < 0)
+      {
+        // printf("Don't access\n");
+      }
+      if ((i >= 0x30 && i <= 0x37) || (i >= 0x50 && i <= 0x5F))
+        res = i2c_smbus_read_byte(file);
+      else
+        res = i2c_smbus_write_quick(file, I2C_SMBUS_WRITE);
+      if (res >= 0)
+      {
+        address = i;
+        flag++;
+      }
     }
   }
 
@@ -73,7 +85,6 @@ int scan_address(int file)
   }
   else
   {
-
     return 0;
   }
 }
@@ -112,6 +123,23 @@ void *threadfunction2(void *args)
 {
   while (1)
   {
+    // pthread_mutex_lock(&mutexsum);
+
+    // pthread_mutex_unlock(&mutexsum);
+    if (address > 128 || address < 0)
+    {
+      if (start_timer(500, &timer_handler))
+      {
+        printf("\n timer error\n");
+        //continue;
+      }
+    }
+    else
+    {
+      printf("address after scan\n");
+      stop_timer();
+    }
+    
     memset(&recevie, '\0', sizeof(recevie));
 
     pthread_mutex_lock(&mutexsum);
@@ -123,6 +151,7 @@ void *threadfunction2(void *args)
     {
       printf("Device don't Detected\n");
       //printf("Error reading1: %s\n", strerror(errno));
+     
       pthread_mutex_lock(&mutexsum);
       a = 0;
       close(fd);
@@ -151,7 +180,7 @@ void *threadfunction2(void *args)
       if (num_bytes1 < 0)
       {
         printf("Error reading2: %s", strerror(errno));
-
+       //  address=-1;
         pthread_mutex_lock(&mutexsum);
         a = 0;
 
@@ -181,13 +210,27 @@ void *threadfunction2(void *args)
   }
 }
 
-void sendRequestToNode(const char b[],int length,const char *msg)
+/*handler timer*/
+void timer_handler(void)
 {
+  var++;
+  address = scan_address(fd);
+  printf("address i2c=%02x",address);
+}
+
+void sendRequestToNode(const char b[], int length, const char *msg)
+{
+
   pthread_mutex_lock(&mutexsum);
   int ac1 = ioctl(fd, I2C_SLAVE, address);
   pthread_mutex_unlock(&mutexsum);
   if (ac1 < 0)
   {
+    // if (start_timer(400, &timer_handler))
+    // {
+    //   printf("\n timer error\n");
+    //   //continue;
+    // }
     pthread_mutex_lock(&mutexsum);
     fd = open(device, O_RDWR);
     a = 0;
@@ -218,6 +261,29 @@ int main(int argc, char *argv[])
   fds[0].events = POLLIN;
   fd = open(device, O_RDWR);
   socket_init();
+
+  printf("address first =%d\n", !address);
+  if (start_timer(500, &timer_handler))
+  {
+    printf("\n timer error\n");
+    //continue;
+  }
+  while(address<0 ||address>128)
+  {
+    printf("---------");
+  }
+  // while (!address)
+  // {
+  //   if (check)
+  //   {
+  //     if (start_timer(500, &timer_handler))
+  //     {
+  //       printf("\n timer error\n");
+  //       //continue;
+  //     }
+  //   }
+  // }
+
   /*creating thread*/
   ret = pthread_create(&id1, NULL, &threadfunction2, NULL);
   if (ret == 0)
@@ -243,11 +309,11 @@ int main(int argc, char *argv[])
       count = (count + 1) % 1000;
       if (count == 0)
       {
-        sendRequestToNode(key,sizeof(key),msg_send_key);
+        sendRequestToNode(key, sizeof(key), msg_send_key);
       }
       else
       {
-        sendRequestToNode(requestData,sizeof(requestData),msg_req_data);
+        sendRequestToNode(requestData, sizeof(requestData), msg_req_data);
       }
     }
   }
