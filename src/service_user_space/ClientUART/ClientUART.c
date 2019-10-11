@@ -14,24 +14,26 @@
 
 /* define of socket TCP */
 #define MAX 80
-#define PORT 6997
+#define PORT 1000
 #define SA struct sockaddr
 
 int sockfd, connfd;
 static const char *device = "/dev/ttyS2";
+static const char *msg_send_key = "send ACK to uart2";
+static const char *msg_send_data = "send data to uart2";
 char key[5] = {'1', '9', '9', '7', '.'};
 char requestData[3] = {'d', 'a', '*'};
 char recevie[2];
 volatile int fd;
 int a = 0;
 const char responeKey[2] = {'9', '7'};
-const char responeData[2]={'9','9'};
+const char responeData[2] = {'9', '9'};
 
-
-pthread_t id1;
+pthread_t id2;
 
 /*thread function definition*/
-void sendRequestToNode(const char b[], int length);
+
+void sendRequestToNode(const char b[], int length, const char *msg);
 void *threadFunction1(void *args);
 pthread_mutex_t mutexsum;
 
@@ -70,100 +72,64 @@ void *threadfunction1(void *args)
 {
     while (1)
     {
+        printf("-----In Thread 1----\n");
+
+        printf("access read \n");
         memset(&recevie, '\0', sizeof(recevie));
 
         pthread_mutex_lock(&mutexsum);
-        int num_bytes = read(fd, &recevie, sizeof(recevie));
+        int num_bytes1 = read(fd, &recevie, sizeof(recevie));
         pthread_mutex_unlock(&mutexsum);
-
+        printf("num_byte1: %d\n", num_bytes1);
         // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
-        if (num_bytes < 0)
+        if (num_bytes1 < 0)
         {
-            printf("Device don't Detected\n");
-            //printf("Error reading1: %s\n", strerror(errno));
+            printf("Error reading2: %s", strerror(errno));
+
             pthread_mutex_lock(&mutexsum);
-            a = 0;
+            //  a = 0;
             close(fd);
             pthread_mutex_unlock(&mutexsum);
             // continue;
         }
         else
         {
-            printf("Read %i bytes. Received message: %s\n", num_bytes, recevie);
-            //num_bytes = 0;
-            pthread_mutex_lock(&mutexsum);
-            a = 1;
-            pthread_mutex_unlock(&mutexsum);
-        }
-
-        while (a)
-        {
-            printf("nhay vao whilea\n");
-            memset(&recevie, '\0', sizeof(recevie));
-
-            pthread_mutex_lock(&mutexsum);
-            int num_bytes1 = read(fd, &recevie, sizeof(recevie));
-            pthread_mutex_unlock(&mutexsum);
-
-            // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
-            if (num_bytes1 < 0)
+            printf("start read\n");
+            if (recevie[0] == '9')
             {
-                printf("Error reading2: %s", strerror(errno));
-
-                pthread_mutex_lock(&mutexsum);
-                a = 0;
-
-                close(fd);
-                pthread_mutex_unlock(&mutexsum);
-                // continue;
+                printf("Read %i bytes. Received message in while a: %s\n", num_bytes1, recevie);
+                printf("Detected---------------------------------------------------------------------- \n");
             }
-            else
+            else if (recevie[0] == '7')
             {
-
-                if (recevie[0] == '9' && recevie[1] == '7')
-                {
-                    //printf("Read %i bytes. Received message: %s\n", num_bytes, recevie);
-                    printf("Detected---------------------------------------------------------------------- \n");
-                }
-                if (recevie[0] == '9' && recevie[1] == '9')
-                {
-                    //printf("Read %i bytes. Received message: %s\n", num_bytes, recevie);
-                    printf("send data********************************************************************** \n");
-                }
-                sleep(1);
+                printf("Read %i bytes. Received message in while a: %s\n", num_bytes1, recevie);
+                printf("send data********************************************************************** \n");
+            }
+            else{
+                printf("No connect device\n");
             }
         }
+
 
         sleep(2);
     }
 }
 
-void sendRequestToNode(const char b[], int length)
+void sendRequestToNode(const char b[], int length, const char *msg)
 {
-    pthread_mutex_lock(&mutexsum);
-    int ac1 = ioctl(fd, I2C_SLAVE, address);
-    pthread_mutex_unlock(&mutexsum);
-    if (ac1 < 0)
-    {
-        pthread_mutex_lock(&mutexsum);
-        fd = open(device, O_RDWR);
-        a = 0;
-        pthread_mutex_unlock(&mutexsum);
-        fprintf(stderr, "I2C: Failed to acquire bus access/talk to slave 0x%x\n", address);
-    }
-    else
-    {
-        printf("Enter write\n");
-        pthread_mutex_lock(&mutexsum);
-        int k1 = write(fd, b, length);
-        pthread_mutex_unlock(&mutexsum);
+    printf("%s\n", msg);
 
-        if (k1 < 0)
-        {
-            printf("Write fail\n");
-        }
-        fflush(stdout);
+    pthread_mutex_lock(&mutexsum);
+
+    int k1 = write(fd, b, length);
+    pthread_mutex_unlock(&mutexsum);
+
+    if (k1 < 0)
+    {
+        printf("Write to uart fail\n");
     }
+    fflush(stdout);
+ 
 }
 int main(int argc, char *argv[])
 {
@@ -173,10 +139,9 @@ int main(int argc, char *argv[])
     struct pollfd fds[1];
     fds[0].fd = sockfd;
     fds[0].events = POLLIN;
-    fd = open(device, O_RDWR);
-
+    fd = serialOpen("/dev/ttyS2", 9600);
     /*creating thread*/
-    ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
+    ret = pthread_create(&id2, NULL, &threadfunction1, NULL);
     if (ret == 0)
     {
         printf("Thread created successfully.\n");
@@ -192,23 +157,23 @@ int main(int argc, char *argv[])
     while (1)
     {
 
-        rc = poll(fds, 1, 1000); // 1s time out
+        rc = poll(fds, 1, 2000); // 1s time out
         if (rc == 0)
         {
-
-            printf("start detect>>>>>>>>>>>>>>\n");
+            pthread_mutex_lock(&mutexsum);
+            fd = serialOpen("/dev/ttyS2", 9600);
+            pthread_mutex_unlock(&mutexsum);
+            printf("start detect uart>>>>>>>>>>>>>>\n");
             count = (count + 1) % 4;
             if (count == 0)
             {
-                sendRequestToNode(key, sizeof(key));
+                sendRequestToNode(key, sizeof(key), msg_send_key);
             }
             else
             {
-                sendRequestToNode(requestData, sizeof(requestData));
+                sendRequestToNode(requestData, sizeof(requestData), msg_send_data);
             }
         }
     }
-
-    // close(fd);
     return (EXIT_SUCCESS);
 }
