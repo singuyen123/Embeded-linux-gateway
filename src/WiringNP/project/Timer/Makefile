@@ -8,7 +8,7 @@ EXE		=	ptmr_sigev_thread
 CC	=	gcc
 LIBPATH = -L.
 LDFLAGS	=	-o $(EXE) $(LIBPATH)
-CFLAGS	=	-pthread -lrt -Wall -ldl -lacl -lcrypt  -lcap
+CFLAGS	=	-pthread -lrt -Wall -ldl -lacl -lcrypt -lcap
 
 #compile and assemble C source Files 
 %.o: %.c
