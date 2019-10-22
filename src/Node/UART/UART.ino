@@ -1,3 +1,4 @@
+
 #include <SoftwareSerial.h>
 
 #include <DHT.h>
@@ -9,48 +10,77 @@ char InString[5];
 char keyData[3];
 String receiv;
 DHT dht(DHTPIN, DHTTYPE);
-const String key="1997.";
-const String data="da*";
-int i=0;
+const String key = "1997.";
+const String data = "da*";
+String mystring="";
+
+int i = 0;
+float ccc = 7.4;
+int num = 12;
+char output[10];
+
 int flag=0;
+String t =String(ccc);
 void setup() {
+mystring+='{';
+mystring+='"';
+mystring+='h';
+mystring+='"';
+mystring+=':';
+mystring+='"'+t+'"';
+mystring+='}';
+  
   Serial.begin(9600);
-  dht.begin();     
+  dht.begin();
   // Khởi động cảm biến
   mySerial.begin(9600);
   //mySerial.println("Hello, world?");
 }
- 
+
 void loop() {
- /* float h = dht.readHumidity();    //Đọc độ ẩm
-  float t = dht.readTemperature(); //Đọc nhiệt độ
-  Serial.println("IOT");
-  Serial.print("Nhiet do: ");
-  Serial.println(t);               //Xuất nhiệt độ
-  Serial.print("Do am: ");
-  Serial.println(h);               //Xuất độ ẩm
-  
-  Serial.println();//Xuống hàng
+  /* float h = dht.readHumidity();    //Đọc độ ẩm
+    float t = dht.readTemperature(); //Đọc nhiệt độ
+    Serial.println("IOT");
+    Serial.print("Nhiet do: ");
+    Serial.println(t);               //Xuất nhiệt độ
+    Serial.print("Do am: ");
+    Serial.println(h);               //Xuất độ ẩm
+
+    Serial.println();//Xuống hàng
   */
-   while(mySerial.available())
-   {
-        receiv = mySerial.readString();
-        Serial.println(receiv);
-        if(key.equals(receiv))
-        {
-          Serial.println("key yes");
-          receiv="";
-           mySerial.write("99");
-          // memset(&receiv,'/0',sizeof(receiv));
-          
-        }
-        if(data.equals(receiv))
-        {
-          Serial.println("req data");
-          receiv="";
-           mySerial.write("79");
-          // memset(&receiv,'/0',sizeof(receiv));
-        }        
+//  strcpy(si,"deptrai32");
+//  sprintf(temp, "%f", 3.12);
+//  strcat(si,temp);
+//  Serial.println(temp);
+  while (mySerial.available())
+  {
+ 
     
-   }
+   //memcpy(&test,&doc,sizeof(test));
+//   Serial.println(test);
+    receiv = mySerial.readString();
+    Serial.println(receiv);
+    if (key.equals(receiv))
+    {
+     
+        Serial.println("key yes");
+        receiv = "";
+        dtostrf(ccc, 9, 3, output);
+        output[0]='9';
+        output[1]='9';
+        mySerial.print("99");
+        flag++;
+        memset(&output, '/0', sizeof(output));
+     
+    }
+    
+    if (data.equals(receiv))
+    {
+      Serial.println("req data");
+      receiv = "";
+      mySerial.println(mystring);
+      Serial.println();
+    }
+
+  }
 }

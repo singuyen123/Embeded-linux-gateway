@@ -17,10 +17,11 @@
 #define PORT 1000
 #define SA struct sockaddr
 
+int flagDetect=0;
 int sockfd, connfd;
 static const char *device = "/dev/ttyS2";
-static const char *msg_send_key = "send ACK to uart2";
-static const char *msg_send_data = "send data to uart2";
+static const char *API_key = "send ACK to uart2";
+static const char *request_data = "send data to uart2";
 char key[5] = {'1', '9', '9', '7', '.'};
 char requestData[3] = {'d', 'a', '*'};
 char recevie[2];
@@ -31,6 +32,7 @@ const char responeData[2] = {'9', '9'};
 
 pthread_t id2;
 
+char msg[50];
 /*thread function definition*/
 
 void sendRequestToNode(const char b[], int length, const char *msg);
@@ -75,12 +77,14 @@ void *threadfunction1(void *args)
         printf("-----In Thread 1----\n");
 
         printf("access read \n");
-        memset(&recevie, '\0', sizeof(recevie));
+        memset(&msg, '\0', sizeof(msg));
 
         pthread_mutex_lock(&mutexsum);
-        int num_bytes1 = read(fd, &recevie, sizeof(recevie));
+        int num_bytes1 = read(fd, &msg, sizeof(msg));
         pthread_mutex_unlock(&mutexsum);
+
         printf("num_byte1: %d\n", num_bytes1);
+        printf("Read %i bytes. Received message---- : %s\n", num_bytes1, msg);
         // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
         if (num_bytes1 < 0)
         {
@@ -88,30 +92,40 @@ void *threadfunction1(void *args)
 
             pthread_mutex_lock(&mutexsum);
             //  a = 0;
-            close(fd);
+            //close(fd);
             pthread_mutex_unlock(&mutexsum);
             // continue;
         }
         else
         {
             printf("start read\n");
-            if (recevie[0] == '9')
+        //    memcpy(&datai,&msg[0],sizeof(msg));
+        //    printf("keyi = %s -----value=%s\n",datai.keyi,datai.value);
+        //    printf("sizeof %d------%d\n",sizeof(msg),sizeof(datai));
+        printf("msg:%c",msg[1]);
+            if (msg[1] == '9')
             {
-                printf("Read %i bytes. Received message in while a: %s\n", num_bytes1, recevie);
+                printf("Read %i bytes. Received message in while a***: %s\n", num_bytes1, msg);
                 printf("Detected---------------------------------------------------------------------- \n");
+                flagDetect=0;
             }
-            else if (recevie[0] == '7')
+            else if (msg[2] == 'h')
             {
-                printf("Read %i bytes. Received message in while a: %s\n", num_bytes1, recevie);
+                printf("Read %i bytes. Received message in while a////: %s\n", num_bytes1, msg);
                 printf("send data********************************************************************** \n");
+                flagDetect=0;
             }
             else{
-                printf("No connect device\n");
+                flagDetect++;
+                if(flagDetect>5){
+                     printf("--***---**-------*****No connect device***********____________\n");
+                     flagDetect=0;
+                }
+               
             }
         }
 
-
-        sleep(2);
+        usleep(60000);
     }
 }
 
@@ -135,7 +149,7 @@ int main(int argc, char *argv[])
 {
     int rc;
     int ret;
-    int count = 3;
+    int count = 9;
     struct pollfd fds[1];
     fds[0].fd = sockfd;
     fds[0].events = POLLIN;
@@ -157,21 +171,21 @@ int main(int argc, char *argv[])
     while (1)
     {
 
-        rc = poll(fds, 1, 2000); // 1s time out
+        rc = poll(fds, 1, 500); // 1s time out
         if (rc == 0)
         {
             pthread_mutex_lock(&mutexsum);
-            fd = serialOpen("/dev/ttyS2", 9600);
+          //  fd = serialOpen("/dev/ttyS2", 9600);
             pthread_mutex_unlock(&mutexsum);
             printf("start detect uart>>>>>>>>>>>>>>\n");
-            count = (count + 1) % 4;
+            count = (count + 1) % 10;
             if (count == 0)
             {
-                sendRequestToNode(key, sizeof(key), msg_send_key);
+                sendRequestToNode(key, sizeof(key), API_key);
             }
             else
             {
-                sendRequestToNode(requestData, sizeof(requestData), msg_send_data);
+                sendRequestToNode(requestData, sizeof(requestData), request_data);
             }
         }
     }

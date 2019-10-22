@@ -22,7 +22,7 @@
 #define SS0 10 // GPIOG3 10
 int sockfd, connfd;
 
-static const char *msg_send_key = "send ACK to SPI";
+static const char *API_key = "send ACK to SPI";
 static const char *msg_send_data = "send data to SPI";
 char key[5] = {'1', '9', '9', '7', '.'};
 //char key ="1997.";
@@ -36,8 +36,14 @@ const char responeData[2] = {'9', '9'};
 
 pthread_t id1;
 
-/*thread function definition*/
+/*struct data*/
 
+struct data{
+    char key[5];
+    int value;
+};
+/*thread function definition*/
+struct data msg;
 void sendRequestToNode(const char b[], int length, const char *msg);
 void *threadFunction1(void *args);
 pthread_mutex_t mutexsum;
@@ -79,13 +85,13 @@ void *threadfunction1(void *args)
     {
         printf("-----In Thread 1----\n");
 
-        memset(&recevie, '\0', sizeof(recevie));
+        memset(&msg, '\0', sizeof(msg));
 
         pthread_mutex_lock(&mutexsum);
-        int num_bytes1 = read(fd, &recevie, sizeof(recevie));
+        int num_bytes1 = read(fd, &msg, sizeof(msg));
         pthread_mutex_unlock(&mutexsum);
         printf("num_byte1: %d\n", num_bytes1);
-        printf("Read %i bytes. Received message : %s\n", num_bytes1, recevie);
+        printf("Read %i bytes. Received message : %s\n", num_bytes1, msg.key);
         // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
         if (num_bytes1 < 0)
         {
@@ -100,14 +106,14 @@ void *threadfunction1(void *args)
         {
             printf("start read\n");
              
-            if (recevie[0] == '9')
+            if (msg.key[0] == '9')
             {
-                printf("Read %i bytes. Received message : %s\n", num_bytes1, recevie);
+                printf("Read %i bytes. Received message : %s\n", num_bytes1, msg.key);
                 printf("Detected---------------------------------------------------------------------- \n");
             }
-            else if (recevie[0] == '7')
+            else if (msg.key[0] == '7')
             {
-                printf("Read %i bytes. Received message : %s\n", num_bytes1, recevie);
+                printf("Read %i bytes. Received message : %s\n", num_bytes1, msg.key);
                 printf("send data********************************************************************** \n");
             }
             else
@@ -182,7 +188,7 @@ int main(int argc, char *argv[])
             count = (count + 1) % 4;
             if (count == 0)
             {
-                sendRequestToNode(key, sizeof(key), msg_send_key);
+                sendRequestToNode(key, sizeof(key), API_key);
             }
             else
             {
