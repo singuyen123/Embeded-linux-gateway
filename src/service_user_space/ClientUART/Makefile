@@ -9,17 +9,17 @@ EXE		= 	clientUART
 
 #compiler, Linker Defines
 CC		=	gcc
-#CFLAGS  = -shared -Wall -fPIC -ltr -lpthread
+CFLAGS  =  -ltr 
 LIBPATH =  -pthread 
-LDFLAGS	=	-o $(EXE) $(LIBPATH)
+LDFLAGS	=	 -o $(EXE) $(LIBPATH)
 
 
 #compile and assemble C souurce Files into Object Files
 $(OBJSDIR)/%.o: %.c
-	$(CC) -c $*.c 
+	$(CC) -c $(CFLAGS) $*.c 
 #Link all object files with external Libraries into Binaries
 $(EXE): $(OBJ)
-	$(CC) $(LDFLAGS) $(OBJ)
+	$(CC) $(LDFLAGS) $(OBJ) -ljson-c
 #$(EXE2): $(OBJ)	
 #	$(CC) $(LDFLAGS2) $(OBJ)
 # Objects depend on these Libraries

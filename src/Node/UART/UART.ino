@@ -7,28 +7,32 @@ SoftwareSerial mySerial(2, 3); // RX, TX
 const int DHTPIN = 2;       //Đọc dữ liệu từ DHT11 ở chân 2 trên mạch Arduino
 const int DHTTYPE = DHT11;  //Khai báo loại cảm biến, có 2 loại là DHT11 và DHT22
 char InString[5];
-char keyData[3];
 String receiv;
 DHT dht(DHTPIN, DHTTYPE);
 const String key = "1997.";
 const String data = "da*";
-String mystring="";
+String stringDetect="";
+String stringData="";
+
 
 int i = 0;
 float ccc = 7.4;
 int num = 12;
+int keynode=97;
+int keyData=99;
 char output[10];
 
 int flag=0;
 String t =String(ccc);
 void setup() {
-mystring+='{';
-mystring+='"';
-mystring+='h';
-mystring+='"';
-mystring+=':';
-mystring+='"'+t+'"';
-mystring+='}';
+stringDetect+='{';
+stringDetect+='"';
+stringDetect+="keynode";
+stringDetect+='"';
+stringDetect+=':';
+//mystring+='"'+t+'"';
+stringDetect+=keynode;
+stringDetect+='}';
   
   Serial.begin(9600);
   dht.begin();
@@ -38,6 +42,7 @@ mystring+='}';
 }
 
 void loop() {
+
   /* float h = dht.readHumidity();    //Đọc độ ẩm
     float t = dht.readTemperature(); //Đọc nhiệt độ
     Serial.println("IOT");
@@ -64,13 +69,13 @@ void loop() {
     {
      
         Serial.println("key yes");
-        receiv = "";
-        dtostrf(ccc, 9, 3, output);
-        output[0]='9';
-        output[1]='9';
-        mySerial.print("99");
+     //   receiv = "";
+//        dtostrf(ccc, 9, 3, output);
+//        output[0]='9';
+//        output[1]='9';
+        mySerial.println(stringDetect);
         flag++;
-        memset(&output, '/0', sizeof(output));
+       // memset(&output, '/0', sizeof(output));
      
     }
     
@@ -78,7 +83,22 @@ void loop() {
     {
       Serial.println("req data");
       receiv = "";
-      mySerial.println(mystring);
+      stringData+='{';
+      stringData+='"';
+      stringData+="keynode";
+      stringData+='"';
+      stringData+=':';
+      //mystring+='"'+t+'"';
+      stringData+=keyData;
+      stringData+=",";
+      stringData+='"';
+      stringData+="Temp";
+      stringData+='"';
+      stringData+=':';
+      stringData+=ccc;
+      stringData+='}';
+      mySerial.println(stringData);
+      stringData="";
       Serial.println();
     }
 
