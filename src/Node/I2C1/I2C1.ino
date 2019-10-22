@@ -7,12 +7,30 @@
 // Define Slave answer size
 #define ANSWERSIZE 5
 char key[6];
+const String keyNode = "1997.";
+const String dataNode = "da*";
 // Define string with response to Master
-String answer = "97";
- int i=0;
- volatile int flag=0;
+int i=0;
+volatile int flag=0;
+String receiveGw="";
+String stringDetect="";
+String stringData="";
+int keynode=97;
+int keyData=99;
+
+
+
+
 void setup() {
- 
+  
+  stringDetect+='{';
+  stringDetect+='"';
+  stringDetect+="keynode";
+  stringDetect+='"';
+  stringDetect+=':';
+  //mystring+='"'+t+'"';
+  stringDetect+=keynode;
+  stringDetect+='}';
   // Initialize I2C communications as Slave
   Wire.begin(SLAVE_ADDR);
   
@@ -32,28 +50,34 @@ void receiveEvent() {
   // Read while data received
   while (0 < Wire.available()) {
     key[i] = Wire.read();
-    Serial.println(key[i]);
-  //  Serial.print("i=");
-    //Serial.println(i);
+    receiveGw+=key[i];
+   // Serial.println(key[i]);
    
     if(key[i]=='.')
     {
-      flag=0;
-        Serial.println("end line");
-     //  Serial.println(key[i]);
-     //   Wire.onRequest(requestEvent);
-        i=0;
-        memset(&key,'/0',sizeof(key));
+      Serial.println(receiveGw);
+      if (keyNode.equals(receiveGw))
+      {
+        Serial.println("exactly KEYNode");
+        flag=0;
+      }
+      i=0;
+      memset(&key,'/0',sizeof(key));
+      receiveGw="";
     }
 
     
     if(key[i]=='*')
     {
-        Serial.println("end line1");
-      // Serial.println(key[i]);
-      //  Wire.onRequest(requestEvent1);
-      flag=1;
+     
+        Serial.println(receiveGw);
+        if (dataNode.equals(receiveGw))
+        {
+          Serial.println("exactly DataNode");
+          flag=1;
+        }
         i=0;
+        receiveGw="";
         memset(&key,'/0',sizeof(key));
     }
          i++;
@@ -66,19 +90,24 @@ void receiveEvent() {
 void requestEvent() {
   // Send response back to Master
   if(flag==0){
-     Serial.println("Request key");
-     Wire.write("97");
+     Serial.println("Respone keyNode");
+   //  String stringDe="97";
+     Wire.println(stringDetect);
   }else
   {
-      Wire.write("99");
-  // Print to Serial Monitor
-  Serial.println("Request data");
+      stringData+='{';
+      stringData+='"';
+      stringData+="keynode";
+      stringData+='"';
+      stringData+=':';
+      //mystring+='"'+t+'"';
+      stringData+=keyData;
+      stringData+='}';
+      Wire.println(stringData);
+      stringData="";
+ // Print to Serial Monitor
+      Serial.println("Respone dataNode");
   }
- 
-  //delay(2000);
-  // Print to Serial Monitor
-
-  //return;
  
 }
  

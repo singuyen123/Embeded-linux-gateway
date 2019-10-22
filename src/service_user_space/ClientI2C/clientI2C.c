@@ -16,6 +16,7 @@
 #include "src/i2c.h"
 #include "src/smbus.h"
 #include "src/timer.h"
+#include <json-c/json.h>
 
 #define I2CBUS 0
 
@@ -30,14 +31,16 @@ int var;
 static const char *device = "/dev/i2c-0";
 char requestkey[5] = {'1', '9', '9', '7', '.'};
 char requestData[3] = {'d', 'a', '*'};
-static const char *msg_send_key = "send ACK to I2C";
+static const char *msg_req_key = "send ACK to I2C";
 static const char *msg_req_data = "send request data to I2C";
-char recevie[2];
+char recevie[50];
 volatile int fd;
 int a = 0;
-const char keyre[2] = {'9', '7'};
-const char ask[2] = "OK";
-volatile int address=-1;
+
+const int checkKey = 97;
+const int checkData = 99;
+
+volatile int address = -1;
 pthread_t id1;
 /*thread function definition*/
 void sendRequestToNode(const char b[], int length, const char *msg);
@@ -54,8 +57,6 @@ int scan_address(int file)
     if (var > 5)
     {
       var = 0;
-      //stop_timer();
-      
       printf("Device don't Detected after scan\n");
       break;
     }
@@ -136,7 +137,7 @@ void *threadfunction2(void *args)
       printf("address after scan\n");
       stop_timer();
     }
-    
+
     memset(&recevie, '\0', sizeof(recevie));
 
     pthread_mutex_lock(&mutexsum);
@@ -150,12 +151,11 @@ void *threadfunction2(void *args)
       //printf("Error reading1: %s\n", strerror(errno));
       pthread_mutex_lock(&mutexsum);
       a = 0;
-      address=-1;
+      address = -1;
       start_timer(500, &timer_handler);
-   //   close(fd);
-   
+      //   close(fd);
+
       pthread_mutex_unlock(&mutexsum);
-      // continue;
     }
     else
     {
@@ -179,25 +179,29 @@ void *threadfunction2(void *args)
       if (num_bytes1 < 0)
       {
         printf("Error reading2: %s", strerror(errno));
-       //  address=-1;
+
         pthread_mutex_lock(&mutexsum);
         a = 0;
-       // address=-1;
-       
-       // close(fd);
+        // close(fd);
         pthread_mutex_unlock(&mutexsum);
         // continue;
       }
       else
       {
+        struct json_object *parsed_json;
+        struct json_object *keynode;
 
-        if (recevie[0] == '9' && recevie[1] == '7')
+        parsed_json = json_tokener_parse(recevie);
+        json_object_object_get_ex(parsed_json, "keynode", &keynode);
+        int checkResponse = json_object_get_int(keynode);
+        printf("checkResponse: %d\n", checkResponse);
+        if (checkResponse==checkKey)
         {
           //printf("Read %i bytes. Received message: %s\n", num_bytes, recevie);
           //   write(sockfd, "usb", sizeof("usb"));
           printf("Detected---------------------------------------------------------------------- \n");
         }
-        if (recevie[0] == '9' && recevie[1] == '9')
+        if (checkResponse==checkData)
         {
           //printf("Read %i bytes. Received message: %s\n", num_bytes, recevie);
           printf("send data********************************************************************** \n");
@@ -216,13 +220,12 @@ void timer_handler(void)
 {
   var++;
   address = scan_address(fd);
-  printf("address i2c=%02x\n",address);
-  if (address < 128 && address >0)
+  printf("address i2c=%02x\n", address);
+  if (address < 128 && address > 0)
   {
-     printf("-------------------------------Detected-------------------------------- \n");
-        stop_timer();
+    printf("-------------------------------Detected-------------------------------- \n");
+    stop_timer();
   }
-
 }
 
 void sendRequestToNode(const char b[], int length, const char *msg)
@@ -233,14 +236,8 @@ void sendRequestToNode(const char b[], int length, const char *msg)
   pthread_mutex_unlock(&mutexsum);
   if (ac1 < 0)
   {
-    // if (start_timer(400, &timer_handler))
-    // {
-    //   printf("\n timer error\n");
-    //   //continue;
-    // }
     pthread_mutex_lock(&mutexsum);
     fd = open(device, O_RDWR);
-    //  start_timer(500, &timer_handler);
     a = 0;
     pthread_mutex_unlock(&mutexsum);
     fprintf(stderr, "I2C: Failed to acquire bus access/talk to slave 0x%x\n", address);
@@ -276,22 +273,10 @@ int main(int argc, char *argv[])
     printf("\n timer error\n");
     //continue;
   }
-  while(address<0 ||address>128)
+  while (address < 0 || address > 128)
   {
     printf("---------");
   }
-
-  // while (!address)
-  // {
-  //   if (check)
-  //   {
-  //     if (start_timer(500, &timer_handler))
-  //     {
-  //       printf("\n timer error\n");
-  //       //continue;
-  //     }
-  //   }
-  // }
 
   /*creating thread*/
   ret = pthread_create(&id1, NULL, &threadfunction2, NULL);
@@ -318,7 +303,7 @@ int main(int argc, char *argv[])
       count = (count + 1) % 10;
       if (count == 0)
       {
-        sendRequestToNode(requestkey, sizeof(requestkey), msg_send_key);
+        sendRequestToNode(requestkey, sizeof(requestkey), msg_req_key);
       }
       else
       {
@@ -327,6 +312,5 @@ int main(int argc, char *argv[])
     }
   }
 
-  // close(fd);
   return (EXIT_SUCCESS);
 }

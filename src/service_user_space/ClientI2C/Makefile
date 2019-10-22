@@ -24,7 +24,7 @@ $(OBJSDIR)/%.o: %.c
 
 # Link all Object Files with external Libraries into Binaries
 $(EXE): $(OBJ)
-	$(CC) $(LDFLAGS) $(OBJ)
+	$(CC) $(LDFLAGS) $(OBJ) -ljson-c
 
 # Create a gdb/dbx Capable Executable with DEBUG flags turned on
 #debug:
