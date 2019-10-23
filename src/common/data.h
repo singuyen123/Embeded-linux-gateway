@@ -7,12 +7,38 @@
 enum Node {
     kUart,
     kI2c,
-    kUSB
+    kUSB,
+    kWifi
+}
+
+struct DataI2c {
+    char address[2];
+    char msg[50];
+}
+
+struct DataUart {
+    char msg[50];
+}
+
+struct DataUsb {
+    char device_name[20];
+    char msg[50];
+}
+
+struct DataWifi {
+    char ip[15];
+    char device_name[20];
+    char msg[50];
 }
 
 struct Data {
     Node node;
-    string msg;
+    union msg {
+	DataI2c i2c;
+	DataUart uart;
+	DataUsb usb;
+	DataWifi wifi;
+    }
 }
 
 #endif  // COMMON_DATA_H_
