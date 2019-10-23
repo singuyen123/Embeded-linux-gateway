@@ -18,7 +18,7 @@
 #     Rainer Poisel - support for multi-core builds and cross-compilation
 #*******************************************************************************/
 
-# Note: on OS X you should install XCode and the associated command-line tools
+# Note: n OS X you should install XCode and the associated command-line tools
 
 SHELL = /bin/sh
 .PHONY: clean, mkdir, install, uninstall, html
