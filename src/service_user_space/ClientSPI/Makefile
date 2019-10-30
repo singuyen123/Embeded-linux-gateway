@@ -1,1 +1,1 @@
-gcc -Wall -o spi_mater spi_master.c -lwiringPi -lpthread
+gcc clientSPI.c -ljson-c -Wall -o spiclient2810 -lwiringPi -lpthread
