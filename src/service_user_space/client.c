@@ -8,10 +8,12 @@
 #include <sys/socket.h>
 #include <syslog.h>
 #include <poll.h>
+#include "data.h"
 
 #define MAX 80
 #define PORT 6997
 #define SA struct sockaddr
+struct Data data;
 
 void delay(int number_of_seconds) {
   // Converting time into milli_seconds
@@ -36,7 +38,7 @@ int main() {
     exit(0);
   }
   else
-    syslog(LOG_INFO, "Socket successfully created..\n");
+    printf("Socket successfully created..\n");
   bzero(&servaddr, sizeof(servaddr));
 
   // assign IP, PORT
@@ -46,14 +48,19 @@ int main() {
 
   // connect the client socket to server socket
   if (connect(sockfd, (SA *)&servaddr, sizeof(servaddr)) != 0) {
-    syslog(LOG_INFO, "connection with the server failed...\n");
+    printf( "connection with the server failed...\n");
     exit(0);
   }
   else
-    syslog(LOG_INFO, "connected to the server..\n");
-
+    printf( "connected to the server..\n");
+  while(1) {
+    printf("send data\n");
+    data.node = kI2c;
+    send(sockfd, &data, sizeof(data),0);
+    delay(1000);
+  }
   // function for chat
-  while (1) {
+  /* while (1) {
     FILE *f = popen("mount | grep /dev/sdb1", "r");
     if (NULL != f)
     {
@@ -64,13 +71,12 @@ int main() {
       else
       {
         puts("/dev/sdb1 is mounted");
-        write(sockfd, "usb", sizeof("usb"));
+        
       }
-      /* close the command file */
       pclose(f);
     }
     delay(1000);
-  }
+  }*/
 
   // close the socket
   close(sockfd);
