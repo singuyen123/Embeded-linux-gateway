@@ -243,30 +243,43 @@ int main(int argc, char *argv[])
         if (rc == 0)
         {
             //  printf("start detect SPI>>>>>>>>>>>>>>\n");
-           // count = (count + 1) % 5;
-           // if (count == 0)
-         //   {
-            pthread_cancel(id1);
-
-            sendRequestToNode(requestKey, sizeof(requestKey), API_key);
-        
-            ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
-            if (ret == 0)
+            count = (count + 1) % 5;
+            if (count == 0)
             {
-                printf("Thread created again successfully.\n");
+                pthread_cancel(id1);
+
+                sendRequestToNode(requestKey, sizeof(requestKey), API_key);
+
+                ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
+                if (ret == 0)
+                {
+                    printf("Thread created again successfully.\n");
+                }
+                else
+                {
+                    printf("Thread not created again.\n");
+                    return 0; /*return from main*/
+                }
+
+                pthread_mutex_init(&mutexsum, NULL);
             }
             else
             {
-                printf("Thread not created again.\n");
-                return 0; /*return from main*/
-            }
+                pthread_cancel(id1);
+                sendRequestToNode(requestData, sizeof(requestData), msg_send_data);
+                ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
+                if (ret == 0)
+                {
+                    printf("Thread created again successfully.\n");
+                }
+                else
+                {
+                    printf("Thread not created again.\n");
+                    return 0; /*return from main*/
+                }
 
-            pthread_mutex_init(&mutexsum, NULL);
-            // }
-            // else
-            // {
-            //     sendRequestToNode(requestData, sizeof(requestData), msg_send_data);
-            // }
+                pthread_mutex_init(&mutexsum, NULL);
+            }
         }
     }
     return (EXIT_SUCCESS);
