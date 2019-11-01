@@ -124,8 +124,5 @@ void loop (void) {
    // SPI.attachInterrupt(); 
       fflush(stdin);
    }
-
-  
-
    
 }

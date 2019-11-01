@@ -15,7 +15,7 @@
 #include "wiringPiSPI.h"
 /* define of socket TCP */
 #define MAX 80
-#define PORT 1000
+#define PORT 6997
 #define SA struct sockaddr
 /*define parameter SPI*/
 #define chanel 0
@@ -140,6 +140,7 @@ void *threadfunction1(void *args)
                 if (checkResponse == responeKey)
                 {
                     printf("Detected---------------------------------------------------------------------- \n");
+                    
                     flagDetect++;
                 }
                 else if (checkResponse == responeData)
