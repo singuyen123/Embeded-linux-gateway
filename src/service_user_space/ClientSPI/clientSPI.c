@@ -25,22 +25,25 @@ int sockfd, connfd;
 
 static const char *API_key = "----------send ACK to SPI---------";
 static const char *msg_send_data = "********send data to SPI************";
-char requestKey[2] = {'b', '.'};
-char requestData[2] = {'a', '.'};
+char requestKey[2] = {'b', '*'};
+char requestData[2] = {'a', '*'};
 char msgReceive[50];
 char msgReceive1[50];
 volatile int ka = 0;
 
 volatile int fd;
-int flagDetect = 0;
+volatile int flagDetect = 0;
+volatile int flagDetecCount = 0;
+volatile int flag1 = 0;
 
 const int responeKey = 99;
 const int responeData = 97;
-volatile int flag_no_receive = 1;
+volatile int flag_no_receive = 0;
 pthread_t id1;
 
 /*thread function definition*/
 void sendRequestToNode(const char b[], int length, const char *msg);
+//void sendRequestToNode(const char b[], int length);
 void *threadFunction1(void *args);
 pthread_mutex_t mutexsum;
 
@@ -75,107 +78,89 @@ void socket_init()
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------------*/
-int flag1 = 0;
-int flag2 = 0;
+struct json_object *parsed_json;
+struct json_object *keynode;
 void *threadfunction1(void *args)
 {
-    while (flag_no_receive)
+    while (1)
     {
-        printf("-----In Thread 1----\n");
-        // memset(&msgReceive, '\0', sizeof(msgReceive));
-        //     int num_byte= wiringPiSPIDataRW(chanel,msgReceive,50);
-        int num_byte = read(fd, msgReceive, sizeof(msgReceive));
-        printf("Read %i bytes. Received message------ : %s\n", num_byte, msgReceive);
-        usleep(200000);
-        //  printf("-----------Received message11111111--- : %c\n", msgReceive[0]);
-        // printf("-----------Received messa22222222--- : %c\n", msgReceive[1]);
-        if (msgReceive[0] == '{')
+
+        printf("****Thread function1----");
+        while (flag_no_receive)
         {
-            flag1 = 1;
+                printf("still read -------------------\n");
+            if (flagDetecCount > 3)
+            {
+                if (flagDetect == 0)
+                {
+                    printf("-------------------------Device don't detected------------------------\n");
+                }
+                else
+                {
+                    flagDetect = 0;
+                }
+                printf("flagDetect: %d\n", flagDetect);
+                flagDetecCount = 0;
+            }
+          //  pthread_mutex_lock(&mutexsum);
+
+            int num_byte = read(fd, msgReceive, sizeof(msgReceive));
+
+            //pthread_mutex_unlock(&mutexsum);
+
+            printf("Read %i bytes. Received message------ : %s\n", num_byte, msgReceive);
+            usleep(50000);
+
+            //  printf("-----------Received message11111111--- : %c\n", msgReceive[0]);
+            // printf("-----------Received messa22222222--- : %c\n", msgReceive[1]);
+            if (msgReceive[0] == '{')
+            {
+                flag1 = 1;
+            }
+            if (msgReceive[0] == '.')
+            {
+                flag1 = 0;
+                memset(&msgReceive1, '\0', sizeof(msgReceive1));
+            }
+            if (msgReceive[0] == '}' && msgReceive1[0] == '{')
+            {
+                flag1 = 0;
+                msgReceive1[ka] = msgReceive[0];
+                printf("Received message11111111--- : %s\n", msgReceive1);
+                ka = 0;
+
+                printf("start read\n");
+
+                parsed_json = json_tokener_parse(msgReceive1);
+                json_object_object_get_ex(parsed_json, "keynode", &keynode);
+
+                int checkResponse = json_object_get_int(keynode);
+                printf("checkResponse: %d\n", checkResponse);
+
+                if (checkResponse == responeKey)
+                {
+                    printf("Detected---------------------------------------------------------------------- \n");
+                    flagDetect++;
+                }
+                else if (checkResponse == responeData)
+                {
+                    printf("send data********************************************************************** \n");
+                    flagDetect++;
+                }
+
+                memset(&msgReceive1, '\0', sizeof(msgReceive1));
+            }
+
+            if (flag1 == 1 && msgReceive[0] != '.' && msgReceive[0] != 'a' && msgReceive[0] != 'b')
+            {
+                msgReceive1[ka] = msgReceive[0];
+                ka++;
+            }
+
+            fflush(stdout);
         }
-        if (msgReceive[0] == '.')
-        {
-            flag1 = 0;
-            memset(&msgReceive1, '\0', sizeof(msgReceive1));
-        }
-        if (msgReceive[0] == '}' && msgReceive1[0] == '{')
-        {
-            flag1 = 0;
-            msgReceive1[ka] = msgReceive[0];
-            printf("Received message11111111--- : %s\n", msgReceive1);
-            ka = 0;
-            memset(&msgReceive1, '\0', sizeof(msgReceive1));
-        }
-        if (flag1 == 1 && msgReceive[0] != '.' && msgReceive[0] != 'a' && msgReceive[0] != 'b')
-        {
-            msgReceive1[ka] = msgReceive[0];
-            //    memset(&msgReceive, '\0', sizeof(msgReceive));
-            ka++;
-            // if (ka == 6)
-            // {
-            //     printf("Received message11111111--- : %s\n", msgReceive1);
-            //     ka = 0;
-            // }
-        }
-
-        //    sleep(1);
-        //  if(msgReceive[4]=='}')
-        //{
-        //  printf("array 4 %s",msgReceive[4]);
-        //  memset(&msgReceive, '\0', sizeof(msgReceive));
-        //}
-
-        // pthread_mutex_lock(&mutexsum);
-        // int num_bytes1 = read(fd, &msgReceive, sizeof(msgReceive));
-        // pthread_mutex_unlock(&mutexsum);
-        // printf("Read %i bytes. Received message------ : %s\n", num_bytes1, msgReceive);
-        // // n is the number of bytes read. n may be 0 if no bytes were received, and can also be -1 to signal an error.
-        // if (num_bytes1 < 0)
-        // {
-        //     printf("Error reading2: %s", strerror(errno));
-        // }
-        // else
-        // {
-        //     // printf("start read\n");
-        //     // struct json_object *parsed_json;
-        //     // struct json_object *keynode;
-
-        //     // parsed_json = json_tokener_parse(msgReceive);
-        //     // json_object_object_get_ex(parsed_json, "keynode", &keynode);
-
-        //     // int checkResponse = json_object_get_int(keynode);
-        //     // printf("checkResponse: %d\n", checkResponse);
-
-        //     // printf("Read %i bytes. Received message***** : %s\n", num_bytes1, msgReceive);
-        //     // if (checkResponse == responeKey)
-        //     // {
-        //     //     printf("Read %i bytes. Received message : %s\n", num_bytes1, msgReceive);
-        //     //     printf("Detected---------------------------------------------------------------------- \n");
-        //     //     flagDetect = 0;
-        //     // }
-        //     // else if (checkResponse == responeData)
-        //     // {
-        //     //     printf("Read %i bytes. Received message : %s\n", num_bytes1, msgReceive);
-        //     //     printf("send data********************************************************************** \n");
-        //     //     flagDetect = 0;
-        //     // }
-        //     // else
-        //     // {
-        //     //     flagDetect++;
-        //     //     if (flagDetect > 10)
-        //     //     {
-        //     //         printf("No connect device\n");
-        //     //         flagDetect = 0;
-        //     //     }
-        //     // }
-        // }
-
-        // int num_bytes1= wiringPiSPIDataRW(chanel,&msg_send_data,10);
-        //         printf("Read %i bytes. Received message------ : %s\n", num_bytes1, msgReceive);
-        // usleep(5000);
-        //    sleep(1);
-        fflush(stdout);
     }
+  //  return 0;
 }
 void setUpSPI()
 {
@@ -184,22 +169,25 @@ void setUpSPI()
     if ((wiringPiSPISetup(chanel, speed)) < 0)
     {
         fprintf(stderr, "SPI Setup failed: %s\n", strerror(errno));
-        // return 0;
     }
 
     fd = wiringPiSPIGetFd(0);
 }
 void sendRequestToNode(const char b[], int length, const char *msg)
 {
+    // void sendRequestToNode(const char b[], int length)
+    // {
     pthread_mutex_lock(&mutexsum);
     flag_no_receive = 0;
+    flagDetecCount++;
     pthread_mutex_unlock(&mutexsum);
+
     printf("%s\n", msg);
     digitalWrite(SS0, 0);
 
-    pthread_mutex_lock(&mutexsum);
+  //  pthread_mutex_lock(&mutexsum);
     int k1 = write(fd, b, length);
-    pthread_mutex_unlock(&mutexsum);
+   // pthread_mutex_unlock(&mutexsum);
 
     digitalWrite(SS0, 1);
 
@@ -207,9 +195,9 @@ void sendRequestToNode(const char b[], int length, const char *msg)
     {
         printf("Write to uart fail\n");
     }
-    pthread_mutex_lock(&mutexsum);
+    ////pthread_mutex_lock(&mutexsum);
     flag_no_receive = 1;
-    pthread_mutex_unlock(&mutexsum);
+   // pthread_mutex_unlock(&mutexsum);
     fflush(stdout);
 }
 int main(int argc, char *argv[])
@@ -222,64 +210,63 @@ int main(int argc, char *argv[])
     fds[0].events = POLLIN;
 
     setUpSPI();
-    // /*creating thread*/
-    // ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
-    // if (ret == 0)
-    // {
-    //     printf("Thread created successfully.\n");
-    // }
-    // else
-    // {
-    //     printf("Thread not created.\n");
-    //     return 0; /*return from main*/
-    // }
+    ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
+    if (ret == 0)
+    {
+        printf("Thread created successfully.\n");
+    }
+    else
+    {
+        printf("Thread not created.\n");
+        return 0; /*return from main*/
+    }
 
-    // pthread_mutex_init(&mutexsum, NULL);
-
+    pthread_mutex_init(&mutexsum, NULL);
     while (1)
     {
 
-        rc = poll(fds, 1, 5000); // 1s time out
+        rc = poll(fds, 1, 2000); // 1s time out
         if (rc == 0)
         {
-            //  printf("start detect SPI>>>>>>>>>>>>>>\n");
-            count = (count + 1) % 5;
-            if (count == 0)
-            {
-                pthread_cancel(id1);
+
+            // count = (count + 1) % 5;
+            // if (count == 0)
+            // {
+                //  pthread_cancel(id1);
 
                 sendRequestToNode(requestKey, sizeof(requestKey), API_key);
+                // sendRequestToNode(requestKey, sizeof(requestKey));
+                // ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
+                // if (ret == 0)
+                // {
+                //     printf("Thread created again successfully.\n");
+                // }
+                // else
+                // {
+                //     printf("Thread not created again.\n");
+                //     return 0; /*return from main*/
+                // }
 
-                ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
-                if (ret == 0)
-                {
-                    printf("Thread created again successfully.\n");
-                }
-                else
-                {
-                    printf("Thread not created again.\n");
-                    return 0; /*return from main*/
-                }
+                //    pthread_mutex_init(&mutexsum, NULL);
+            // }
+            // else
+            // {
+            //     //  pthread_cancel(id1);
+            //     sendRequestToNode(requestData, sizeof(requestData), msg_send_data);
+            //     // sendRequestToNode(requestData, sizeof(requestData));
+            //     // ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
+            //     // if (ret == 0)
+            //     // {
+            //     //     printf("Thread created again successfully.\n");
+            //     // }
+            //     // else
+            //     // {
+            //     //     printf("Thread not created again.\n");
+            //     //     return 0; /*return from main*/
+            //     // }
 
-                pthread_mutex_init(&mutexsum, NULL);
-            }
-            else
-            {
-                pthread_cancel(id1);
-                sendRequestToNode(requestData, sizeof(requestData), msg_send_data);
-                ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
-                if (ret == 0)
-                {
-                    printf("Thread created again successfully.\n");
-                }
-                else
-                {
-                    printf("Thread not created again.\n");
-                    return 0; /*return from main*/
-                }
-
-                pthread_mutex_init(&mutexsum, NULL);
-            }
+            //     //  pthread_mutex_init(&mutexsum, NULL);
+            // }
         }
     }
     return (EXIT_SUCCESS);
