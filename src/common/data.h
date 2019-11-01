@@ -5,9 +5,14 @@ enum Node {
     kUart,
     kI2c,
     kUSB,
+    kSPI,
     kWifi
 };
 
+struct DataSpi {
+    char msg[50];
+    int dspi;
+};
 struct DataI2c {
     char address[2];
     char msg[50];
@@ -33,6 +38,7 @@ union MSG {
 	struct DataUart uart;
 	struct DataUsb usb;
 	struct DataWifi wifi;
+    struct DataSpi spi;
 };
 struct Data {
     enum Node node;

@@ -11,6 +11,7 @@
 #include <netdb.h>
 #include <pthread.h>
 #include <json-c/json.h>
+#include "../../common/data.h"
 #include "wiringPi.h"
 #include "wiringPiSPI.h"
 /* define of socket TCP */
@@ -41,6 +42,7 @@ const int responeData = 97;
 volatile int flag_no_receive = 0;
 pthread_t id1;
 
+struct Data data;
 /*thread function definition*/
 void sendRequestToNode(const char b[], int length, const char *msg);
 //void sendRequestToNode(const char b[], int length);
@@ -55,11 +57,11 @@ void socket_init()
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
     {
-        syslog(LOG_ERR, "socket creation failed...\n");
+        printf("socket creation failed...\n");
         // exit(0);
     }
     else
-        syslog(LOG_INFO, "Socket successfully created..\n");
+        printf("Socket successfully created..\n");
     bzero(&servaddr, sizeof(servaddr));
 
     // assign IP, PORT
@@ -70,25 +72,27 @@ void socket_init()
     // connect the client socket to server socket
     if (connect(sockfd, (SA *)&servaddr, sizeof(servaddr)) != 0)
     {
-        syslog(LOG_INFO, "connection with the server failed...\n");
+        printf("connection with the server failed...\n");
         // exit(0);
     }
     else
-        syslog(LOG_INFO, "connected to the server..\n");
+        printf("connected to the server..\n");
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------------*/
 struct json_object *parsed_json;
 struct json_object *keynode;
+struct json_object *temp;
+
 void *threadfunction1(void *args)
 {
     while (1)
     {
 
-        printf("****Thread function1----");
+        //    printf("****Thread function1----");
         while (flag_no_receive)
         {
-                printf("still read -------------------\n");
+            //       printf("still read -------------------\n");
             if (flagDetecCount > 3)
             {
                 if (flagDetect == 0)
@@ -102,13 +106,13 @@ void *threadfunction1(void *args)
                 printf("flagDetect: %d\n", flagDetect);
                 flagDetecCount = 0;
             }
-          //  pthread_mutex_lock(&mutexsum);
+            //  pthread_mutex_lock(&mutexsum);
 
             int num_byte = read(fd, msgReceive, sizeof(msgReceive));
 
             //pthread_mutex_unlock(&mutexsum);
 
-            printf("Read %i bytes. Received message------ : %s\n", num_byte, msgReceive);
+            //printf("Read %i bytes. Received message------ : %s\n", num_byte, msgReceive);
             usleep(50000);
 
             //  printf("-----------Received message11111111--- : %c\n", msgReceive[0]);
@@ -133,6 +137,7 @@ void *threadfunction1(void *args)
 
                 parsed_json = json_tokener_parse(msgReceive1);
                 json_object_object_get_ex(parsed_json, "keynode", &keynode);
+                json_object_object_get_ex(parsed_json, "Temp", &temp);
 
                 int checkResponse = json_object_get_int(keynode);
                 printf("checkResponse: %d\n", checkResponse);
@@ -140,12 +145,15 @@ void *threadfunction1(void *args)
                 if (checkResponse == responeKey)
                 {
                     printf("Detected---------------------------------------------------------------------- \n");
-                    
+
                     flagDetect++;
                 }
                 else if (checkResponse == responeData)
                 {
                     printf("send data********************************************************************** \n");
+                    data.node = kSPI;
+                    data.msg.spi.dspi = json_object_get_int(temp);
+                    send(sockfd, &data, sizeof(data), 0);
                     flagDetect++;
                 }
 
@@ -161,7 +169,7 @@ void *threadfunction1(void *args)
             fflush(stdout);
         }
     }
-  //  return 0;
+    //  return 0;
 }
 void setUpSPI()
 {
@@ -186,9 +194,9 @@ void sendRequestToNode(const char b[], int length, const char *msg)
     printf("%s\n", msg);
     digitalWrite(SS0, 0);
 
-  //  pthread_mutex_lock(&mutexsum);
+    //  pthread_mutex_lock(&mutexsum);
     int k1 = write(fd, b, length);
-   // pthread_mutex_unlock(&mutexsum);
+    // pthread_mutex_unlock(&mutexsum);
 
     digitalWrite(SS0, 1);
 
@@ -198,7 +206,7 @@ void sendRequestToNode(const char b[], int length, const char *msg)
     }
     ////pthread_mutex_lock(&mutexsum);
     flag_no_receive = 1;
-   // pthread_mutex_unlock(&mutexsum);
+    // pthread_mutex_unlock(&mutexsum);
     fflush(stdout);
 }
 int main(int argc, char *argv[])
@@ -206,6 +214,7 @@ int main(int argc, char *argv[])
     int rc;
     int ret;
     int count = 4;
+    socket_init();
     struct pollfd fds[1];
     fds[0].fd = sockfd;
     fds[0].events = POLLIN;
@@ -233,22 +242,22 @@ int main(int argc, char *argv[])
             // count = (count + 1) % 5;
             // if (count == 0)
             // {
-                //  pthread_cancel(id1);
+            //  pthread_cancel(id1);
 
-                sendRequestToNode(requestKey, sizeof(requestKey), API_key);
-                // sendRequestToNode(requestKey, sizeof(requestKey));
-                // ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
-                // if (ret == 0)
-                // {
-                //     printf("Thread created again successfully.\n");
-                // }
-                // else
-                // {
-                //     printf("Thread not created again.\n");
-                //     return 0; /*return from main*/
-                // }
+            sendRequestToNode(requestKey, sizeof(requestKey), API_key);
+            // sendRequestToNode(requestKey, sizeof(requestKey));
+            // ret = pthread_create(&id1, NULL, &threadfunction1, NULL);
+            // if (ret == 0)
+            // {
+            //     printf("Thread created again successfully.\n");
+            // }
+            // else
+            // {
+            //     printf("Thread not created again.\n");
+            //     return 0; /*return from main*/
+            // }
 
-                //    pthread_mutex_init(&mutexsum, NULL);
+            //    pthread_mutex_init(&mutexsum, NULL);
             // }
             // else
             // {

@@ -93,7 +93,8 @@ void *netlink_rev(void *netlink_user)
 
 /* code socket TCP*/
 
-void *run_socket_tcp() {
+void *run_socket_tcp()
+{
   printf("run socket");
   int sockfd, connfd, len, nfds = 1, rc;
   struct sockaddr_in servaddr, cli;
@@ -101,7 +102,8 @@ void *run_socket_tcp() {
 
   // socket create and verification
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd == -1) {
+  if (sockfd == -1)
+  {
     printf("socket creation failed...\n");
     exit(0);
   }
@@ -118,7 +120,8 @@ void *run_socket_tcp() {
   // Binding newly created socket to given IP and verification
   rc = (bind(sockfd, (SA *)&servaddr, sizeof(servaddr)));
   printf("rc = %d", rc);
-  if (rc != 0) {
+  if (rc != 0)
+  {
     printf("socket bind failed...:%s\n", strerror(errno));
     exit(0);
   }
@@ -126,27 +129,37 @@ void *run_socket_tcp() {
     printf("Socket successfully binded..\n");
 
   // Now server is ready to listen and verification
-  if ((listen(sockfd, 5)) != 0) {
+  if ((listen(sockfd, 5)) != 0)
+  {
     printf("Listen failed...\n");
     exit(0);
   }
   else
     printf("Server listening..\n");
-  while (1) {
+  while (1)
+  {
     rc = poll(poll_fds, nfds, -1);
-    if (rc < 0) {
+    if (rc < 0)
+    {
       printf("poll fail");
     }
-    if (rc == 0) { printf("time out \n"); }
-    for (int i = 1; i <= nfds; i++) {
-      if (poll_fds[0].revents & POLLIN) {
+    if (rc == 0)
+    {
+      printf("time out \n");
+    }
+    for (int i = 1; i <= nfds; i++)
+    {
+      if (poll_fds[0].revents & POLLIN)
+      {
         connfd = accept(sockfd, (SA *)&cli, &len);
-        if (connfd < 0) {
+        if (connfd < 0)
+        {
           printf("server acccept failed...\n");
           exit(0);
         }
-        else {
-          printf("server acccept the client...fd = %d\n",connfd);
+        else
+        {
+          printf("server acccept the client...fd = %d\n", connfd);
           poll_fds[nfds].fd = connfd;
           poll_fds[nfds].events = POLLIN;
           nfds++;
@@ -154,22 +167,28 @@ void *run_socket_tcp() {
         }
       }
 
-      if (poll_fds[i].revents & POLLIN) {
+      if (poll_fds[i].revents & POLLIN)
+      {
         printf("event from client\n");
         rc = recv(poll_fds[i].fd, &data, sizeof(data), 0);
-        if (rc <= 0) {
+        if (rc <= 0)
+        {
           printf("client disconected\n");
           close(poll_fds[i].fd);
           nfds--;
           break;
         }
-        switch (data.node) {
-          case kI2c:
-            printf("msg recive from I2C\n");
-            break;
-          case kUart:
-            printf("msg recive: from UART with data: %f\n", data.msg.uart.dmsg);
-            break;
+        switch (data.node)
+        {
+        case kI2c:
+          printf("msg recive from I2C\n");
+          break;
+        case kUart:
+          printf("msg recive: from UART with data: %f\n", data.msg.uart.dmsg);
+          break;
+        case kSPI:
+          printf("msg recive: from SPI with data: %d\n", data.msg.spi.dspi);
+          break;
         }
       }
     }
@@ -180,7 +199,8 @@ void *run_socket_tcp() {
 
 volatile MQTTClient_deliveryToken deliveredtoken;
 
-void delivered(void *context, MQTTClient_deliveryToken dt) {
+void delivered(void *context, MQTTClient_deliveryToken dt)
+{
   printf("Message with token value %d delivery confirmed\n", dt);
   deliveredtoken = dt;
 }
@@ -205,7 +225,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   return 1;
 }
 
-void connlost(void *context, char *cause) {
+void connlost(void *context, char *cause)
+{
   printf("\nConnection lost\n");
   printf("     cause: %s\n", cause);
 }
@@ -244,7 +265,8 @@ int main(int argc, char *argv[])
 
   MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, delivered);
 
-  if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS) {
+  if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
+  {
     printf("Failed to connect, return code %d\n", rc);
     exit(EXIT_FAILURE);
   }

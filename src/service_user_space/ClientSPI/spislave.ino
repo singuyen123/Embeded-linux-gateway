@@ -1,3 +1,5 @@
+gcc clientSPI.c -ljson-c -Wall -o spiclient2810 -lwiringPi -lpthread
+
 //#include <SPI.h>
 //char value[5];
 //int i=0;
