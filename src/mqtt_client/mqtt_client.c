@@ -21,7 +21,7 @@
 #define TIMEOUT 10000L
 /* define for socket TCP*/
 #define MAX 80
-#define PORT_TCP 1000
+#define PORT_TCP 6997
 #define SA struct sockaddr
 /* define for netlink*/
 #define NETLINK_USER 31
@@ -168,7 +168,7 @@ void *run_socket_tcp() {
             printf("msg recive from I2C\n");
             break;
           case kUart:
-            printf("msg recive: from UART\n");
+            printf("msg recive: from UART with data: %f\n", data.msg.uart.dmsg);
             break;
         }
       }

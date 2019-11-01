@@ -4,6 +4,7 @@
         "i2c.h": "c",
         "i2cbusses.h": "c",
         "types.h": "c",
-        "wiringpispi.h": "c"
+        "wiringpispi.h": "c",
+        "json.h": "c"
     }
 }

@@ -1,6 +1,7 @@
 OBJSDIR	=	./src
 #source, executable, includes, library Defines
-INCL	=	./src/uart.h
+INCL	+=	./src/uart.h \
+			../../common/data.h
 SRC		+=	./src/uart.c \
 			ClientUART.c
 OBJ		=	$(SRC:.c=.o)

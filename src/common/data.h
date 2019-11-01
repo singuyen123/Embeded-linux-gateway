@@ -15,6 +15,7 @@ struct DataI2c {
 
 struct DataUart {
     char msg[50];
+    double dmsg;
 };
 
 struct DataUsb {
@@ -27,15 +28,15 @@ struct DataWifi {
     char device_name[20];
     char msg[50];
 };
-
-struct Data {
-    enum Node node;
-    union msg {
+union MSG {
 	struct DataI2c i2c;
 	struct DataUart uart;
 	struct DataUsb usb;
 	struct DataWifi wifi;
-    };
+};
+struct Data {
+    enum Node node;
+    union MSG msg;
 };
 
 #endif  // COMMON_DATA_H_

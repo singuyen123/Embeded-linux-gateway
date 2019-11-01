@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include "src/uart.h"
 #include <json-c/json.h>
+#include "../../common/data.h"
 
 /* define of socket TCP */
 #define MAX 80
@@ -26,7 +27,7 @@ static const char *request_data = "send data to uart2";
 char requestKey[5] = {'1', '9', '9', '7', '.'};
 char requestData[3] = {'d', 'a', '*'};
 volatile int fd;
-
+struct Data data;
 pthread_t id2;
 
 char msg[50];
@@ -44,11 +45,11 @@ void socket_init()
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
     {
-        syslog(LOG_ERR, "socket creation failed...\n");
+        printf("socket creation failed...\n");
         // exit(0);
     }
     else
-        syslog(LOG_INFO, "Socket successfully created..\n");
+         printf( "Socket successfully created..\n");
     bzero(&servaddr, sizeof(servaddr));
 
     // assign IP, PORT
@@ -59,11 +60,11 @@ void socket_init()
     // connect the client socket to server socket
     if (connect(sockfd, (SA *)&servaddr, sizeof(servaddr)) != 0)
     {
-        syslog(LOG_INFO, "connection with the server failed...\n");
+         printf( "connection with the server failed...\n");
         // exit(0);
     }
     else
-        syslog(LOG_INFO, "connected to the server..\n");
+         printf( "connected to the server..\n");
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -113,7 +114,10 @@ void *threadfunction1(void *args)
             {
                 printf("Read %i bytes. Received message in while a////: %s\n", num_bytes1, msg);
                 printf("****** data************************************************************** \n");
-                printf("Temp: %f\n", json_object_get_double(temp));
+                data.node = kUart;
+                data.msg.uart.dmsg = json_object_get_double(temp);
+                send(sockfd, &data, sizeof(data),0);
+                //printf("Temp: %f\n", json_object_get_double(temp));
                 flagDetect = 0;
             }
             else
@@ -151,10 +155,10 @@ int main(int argc, char *argv[])
     int rc;
     int ret;
     int count = 9;
+    socket_init();
     struct pollfd fds[1];
     fds[0].fd = sockfd;
     fds[0].events = POLLIN;
-
     fd = serialOpen("/dev/ttyS2", 9600);
     /*creating thread*/
     ret = pthread_create(&id2, NULL, &threadfunction1, NULL);
