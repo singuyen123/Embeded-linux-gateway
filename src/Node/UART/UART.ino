@@ -2,7 +2,7 @@
 #include <SoftwareSerial.h>
 
 #include <DHT.h>
-SoftwareSerial mySerial(2, 3); // RX, TX
+SoftwareSerial mySerial(1, 0); // RX, TX
 
 const int DHTPIN = 2;       //Đọc dữ liệu từ DHT11 ở chân 2 trên mạch Arduino
 const int DHTTYPE = DHT11;  //Khai báo loại cảm biến, có 2 loại là DHT11 và DHT22
