@@ -1,13 +1,9 @@
 #source, executable, includes, library Defines
-INCL	+=	../../common/data.h	\
-			../../library/RF24/RF24.h	\
-			../../library/RF24/nRF24L01.h	\
-			../../library/RF24/RF24_config.h	\
-			../../library/RF24/printf.h	
+INCL	+=	../../common/data.h	
 
-SRC		+=	clientSPI.cpp	\
-			../../RF24.cpp
-OBJ		=	$(SRC:.cpp=.o)
+SRC		+=	clientSPI.c	
+			
+OBJ		=	$(SRC:.c=.o)
 EXE		= 	clientSPI
 
 
@@ -15,12 +11,12 @@ EXE		= 	clientSPI
 CC		=	g++
 CFLAGS  =  -ltr 
 LIBPATH =  -pthread 
-LDFLAGS	=	 -o $(EXE) $(LIBPATH)
+LDFLAGS	=	-o $(EXE) $(LIBPATH)
 
 
 #compile and assemble C souurce Files into Object Files
-$(OBJSDIR)/%.o: %.cpp
-	$(CC) -c $(CFLAGS) $*.cpp 
+$(OBJSDIR)/%.o: %.c
+	$(CC) -c $(CFLAGS) $*.c
 #Link all object files with external Libraries into Binaries
 $(EXE): $(OBJ)
 	$(CC) $(LDFLAGS) $(OBJ) -lwiringPi

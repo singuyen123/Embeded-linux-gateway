@@ -12,14 +12,13 @@
 #include <pthread.h>
 //#include <json-c/json.h>
 #include "../../common/data.h"
-#include "../../library/RF24/RF24.h"
+
+#include <RF24/RF24.h>
+
 #include "wiringPi.h"
 #include "wiringPiSPI.h"
 
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
-#include <string>
+ 
 
 /* define of socket TCP */
 #define MAX 80
@@ -27,13 +26,27 @@
 #define SA struct sockaddr
 /*define parameter SPI*/
 #define chanel 0
-#define speed 500000
-#define SS0 10 // GPIOG3 10
+#define speed 800000
+#define SS0 10 // GPIOC3 10
+#define CE 1
 
 RF24 radio(CE, SS0, speed);
 const uint64_t pipes[2] = {0xABCDABCD71LL, 0x544d52687CLL}; // Radio pipe addresses for the 2 nodes to communicate.
 char data[32] = {"_A message from RPi w/ NRF24L+!"};        //Data buffer
-
+  
+void showData(void);
+  
+void showData(void)  
+{  
+      printf("Data: ");  
+      for(int i=0; i<32; i++){  
+         if(isprint(data[i]))  
+           printf("%c", data[i]);  
+         else  
+           printf(".");  
+      }  
+      printf("\n\r");  
+}  
 int main(int argc, char *argv[])
 {
     /***********************************/
