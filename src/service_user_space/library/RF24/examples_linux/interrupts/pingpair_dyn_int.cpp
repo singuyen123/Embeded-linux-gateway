@@ -173,7 +173,7 @@ if (role == role_ping_out)
       next_payload_size = min_payload_size;
 
     // Try again 1s later
-    delay(100);
+    delayRF24(100);
   }
 
 

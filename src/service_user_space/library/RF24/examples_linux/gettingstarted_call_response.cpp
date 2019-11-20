@@ -158,7 +158,7 @@ while (1){
 	  gotByte += 1;  								// Ack payloads are much more efficient than switching to transmit mode to respond to a call
 	  radio.writeAckPayload(pipeNo,&gotByte, 1 );   // This can be commented out to send empty payloads.	  
       printf("Loaded next response %d \n\r", gotByte);
-	  delay(900); //Delay after a response to minimize CPU usage on RPi
+	  delayRF24(900); //Delay after a response to minimize CPU usage on RPi
 				  //Expects a payload every second      
    }
  }

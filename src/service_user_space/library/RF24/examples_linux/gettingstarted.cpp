@@ -204,7 +204,7 @@ int main(int argc, char** argv){
 				// Spew it
 				printf("Got payload(%d) %lu...\n",sizeof(unsigned long), got_time);
 				
-				delay(925); //Delay after payload responded to, minimize RPi CPU time
+				delayRF24(925); //Delay after payload responded to, minimize RPi CPU time
 				
 			}
 		

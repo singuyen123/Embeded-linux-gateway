@@ -167,7 +167,7 @@ int attachInterrupt (int pin, int mode, void (*function)(void))
     pinPass = pin ;
     pthread_create (&threadId[bcmGpioPin], NULL, interruptHandler, NULL) ;
     while (pinPass != -1)
-      delay (1) ;
+      delayRF24 (1) ;
   pthread_mutex_unlock (&pinMutex) ;
 
   return 0 ;

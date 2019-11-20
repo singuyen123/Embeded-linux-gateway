@@ -185,7 +185,7 @@ int main(int argc, char** argv){
 		  printf("Payload Count: %lu \n\r", counter);
   		  counter = 0;
         }
-        delay(2);
+        delayRF24(2);
 	}
 	
 } // loop

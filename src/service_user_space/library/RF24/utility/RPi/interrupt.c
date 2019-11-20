@@ -21,7 +21,7 @@ see <http://www.gnu.org/licenses/>
 #include "interrupt.h"
 #include <pthread.h>
 
-#define delay(x) bcm2835_delay(x)
+#define delayRF24(x) bcm2835_delay(x)
 
 static pthread_mutex_t pinMutex = PTHREAD_MUTEX_INITIALIZER;
 static volatile int    pinPass = -1 ;
@@ -167,7 +167,7 @@ int attachInterrupt (int pin, int mode, void (*function)(void))
     pinPass = pin ;
     pthread_create (&threadId[bcmGpioPin], NULL, interruptHandler, NULL) ;
     while (pinPass != -1)
-      delay (1) ;
+      delayRF24 (1) ;
   pthread_mutex_unlock (&pinMutex) ;
 
   return 0 ;

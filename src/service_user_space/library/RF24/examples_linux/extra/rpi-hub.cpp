@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 	radio.printDetails();
 	
 	printf("Output below : \n");
-	delay(1);
+	delayRF24(1);
 	
 	while(1)
 	{
