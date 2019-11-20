@@ -247,43 +247,6 @@ static char *extractStr (char *progName, char *p, char **str)
  *********************************************************************************
  */
 
-static int doExtensionDrcS (char *progName, int pinBase, char *params)
-{
-  char *port ;
-  int pins, baud ;
-
-  if ((params = extractInt (progName, params, &pins)) == NULL)
-    return FALSE ;
-
-  if ((pins < 1) || (pins > 100))
-  {
-    fprintf (stderr, "%s: pins (%d) out of range (2-100)\n", progName, pins) ;
-    return FALSE ;
-  }
-  
-  if ((params = extractStr (progName, params, &port)) == NULL)
-    return FALSE ;
-
-  if (strlen (port) == 0)
-  {
-    fprintf (stderr, "%s: serial port device name required\n", progName) ;
-    return FALSE ;
-  }
-
-  if ((params = extractInt (progName, params, &baud)) == NULL)
-    return FALSE ;
-
-  if ((baud < 1) || (baud > 4000000))
-  {
-    fprintf (stderr, "%s: baud rate (%d) out of range\n", progName, baud) ;
-    return FALSE ;
-  }
-
-  drcSetupSerial (pinBase, pins, port, baud) ;
-
-  return TRUE ;
-}
-
 
 
 /*
@@ -293,8 +256,6 @@ static int doExtensionDrcS (char *progName, int pinBase, char *params)
 
 struct extensionFunctionStruct extensionFunctions [] = 
 {
-  
-  { "drcs",		&doExtensionDrcS	},
   { NULL,		NULL		 	},
 } ;
 
