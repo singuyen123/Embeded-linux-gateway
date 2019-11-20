@@ -46,6 +46,7 @@ LIBS    =
 SRC	=	wiringPi.c						\
 		softPwm.c softTone.c			\
 		wiringPiSPI.c 					\
+		piHiPri.c piThread.c			\
 		boardtype_friendlyelec.c
 
 OBJ	=	$(SRC:.c=.o)
@@ -125,3 +126,5 @@ depend:
 wiringPi.o: softPwm.h softTone.h wiringPi.h
 boardtype_friendlyelec.o: boardtype_friendlyelec.h
 wiringPiSPI.o: wiringPi.h wiringPiSPI.h
+piHiPri.o: wiringPi.h
+piThread.o: wiringPi.h
