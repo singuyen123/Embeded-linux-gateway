@@ -617,7 +617,7 @@ bool RF24::begin(void)
 	pinMode(ce_pin,OUTPUT);
 	ce(LOW);    
 
-	delay(100);
+	delayRF24(100);
   
   #elif defined(LITTLEWIRE)
     pinMode(csn_pin,OUTPUT);
@@ -628,7 +628,7 @@ bool RF24::begin(void)
 	_SPI.begin(csn_pin);
 	ce(LOW);
 	csn(HIGH);
-	delay(200);
+	delayRF24(200);
   #else
     // Initialize pins
     if (ce_pin != csn_pin) pinMode(ce_pin,OUTPUT);  
@@ -642,7 +642,7 @@ bool RF24::begin(void)
     ce(LOW);
   	csn(HIGH);
   	#if defined (__ARDUINO_X86__)
-		delay(100);
+		delayRF24(100);
   	#endif
   #endif //Linux
 
@@ -652,7 +652,7 @@ bool RF24::begin(void)
   // Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
   // Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
   // WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
-  delay( 5 ) ;
+  delayRF24( 5 ) ;
 
   // Reset NRF_CONFIG and enable 16-bit CRC.
   write_register( NRF_CONFIG, 0x0C ) ;
@@ -807,7 +807,7 @@ void RF24::powerUp(void)
       // For nRF24L01+ to go from power down mode to TX or RX mode it must first pass through stand-by mode.
 	  // There must be a delay of Tpd2stby (see Table 16.) after the nRF24L01+ leaves power down mode before
 	  // the CEis set high. - Tpd2stby can be up to 5ms per the 1.0 datasheet
-      delay(5);
+      delayRF24(5);
    }
 }
 
@@ -820,7 +820,7 @@ void RF24::errNotify(){
 	#if defined (FAILURE_HANDLING)
 	failureDetected = 1;
 	#else
-	delay(5000);
+	delayRF24(5000);
 	#endif
 }
 #endif
@@ -844,7 +844,7 @@ bool RF24::write( const void* buf, uint8_t len, const bool multicast )
 				#if defined (FAILURE_HANDLING)
 				  return 0;		
 				#else
-				  delay(100);
+				  delayRF24(100);
 				#endif
 			}
 		#endif
@@ -1086,7 +1086,7 @@ uint8_t RF24::getDynamicPayloadSize(void)
   endTransaction();
   #endif
 
-  if(result > 32) { flush_rx(); delay(2); return 0; }
+  if(result > 32) { flush_rx(); delayRF24(2); return 0; }
   return result;
 }
 
