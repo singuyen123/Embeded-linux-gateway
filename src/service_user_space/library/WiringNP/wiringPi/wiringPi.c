@@ -2596,6 +2596,14 @@ void delayWiringPi(unsigned int howLong) {
     nanosleep(&sleeper, &dummy);
 }
 
+void delay(unsigned int howLong) {
+    struct timespec sleeper, dummy;
+
+    sleeper.tv_sec = (time_t) (howLong / 1000);
+    sleeper.tv_nsec = (long) (howLong % 1000) * 1000000;
+
+    nanosleep(&sleeper, &dummy);
+}
 /*
  * delayMicroseconds:
  *	This is somewhat intersting. It seems that on the Pi, a single call

@@ -205,6 +205,7 @@ extern int piHiPri (const int pri) ;
 // Extras from arduino land
 
 extern void         delayWiringPi               (unsigned int howLong) ;
+extern void         delay               (unsigned int howLong) ;
 extern void         delayMicrosecondsWiringPi   (unsigned int howLong) ;
 extern unsigned int millisWiringPi              (void) ;
 extern unsigned int microsWiringPi              (void) ;
