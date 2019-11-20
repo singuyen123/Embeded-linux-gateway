@@ -28,10 +28,6 @@ TMRh20 2014 - Updated to work with optimized RF24 Arduino library
 #include "wiringPi.h"
 #include "wiringPiSPI.h"
 using namespace std;
-#define SS0 10 // GPIOC3 10
-#define CE 1   //A6
-#define chanel 0
-#define speed 800000
 //
 // Hardware configuration
 // Configure the appropriate pins for your connections
@@ -51,7 +47,7 @@ using namespace std;
 //RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_24, BCM2835_SPI_SPEED_8MHZ);
 
 // RPi generic:
-RF24 radio(CE,SS0);
+RF24 radio(22,0);
 
 /*** RPi Alternate ***/
 //Note: Specify SPI BUS 0 or 1 instead of CS pin number.
@@ -86,18 +82,8 @@ bool radioNumber = 1;
 
 // Radio pipe addresses for the 2 nodes to communicate.
 const uint8_t pipes[][6] = {"1Node","2Node"};
-volatile int fd;
-void setUpSPI()
-{
-    pinModeWiringPi(SS0, OUTPUT);
-    digitalWriteWiringPi(SS0, 1);
-    if ((wiringPiSPISetup(chanel, speed)) < 0)
-    {
-        fprintf(stderr, "SPI Setup failed: %s\n", strerror(errno));
-    }
 
-    fd = wiringPiSPIGetFd(0);
-}
+
 int main(int argc, char** argv){
 
   bool role_ping_out = true, role_pong_back = false;
@@ -106,7 +92,6 @@ int main(int argc, char** argv){
   cout << "RF24/examples/GettingStarted/\n";
 
   // Setup and configure rf radio
-  setUpSPI();
   radio.begin();
 
   // optionally, increase the delay between retries & # of retries

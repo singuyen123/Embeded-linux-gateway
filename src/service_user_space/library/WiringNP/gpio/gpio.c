@@ -36,8 +36,6 @@
 
 #include <wiringPi.h>
 
-#include <gertboard.h>
-#include <piFace.h>
 
 #include "extensions.h"
 
@@ -544,7 +542,7 @@ void doWfi (int argc, char *argv [])
   }
 
   for (;;)
-    delay (9999) ;
+    delayWiringPi (9999) ;
 }
 
 
@@ -708,7 +706,7 @@ static void doResetExternal (void)
 
   for (pin = wiringPiNodes->pinBase ; pin <= wiringPiNodes->pinMax ; ++pin)
   {
-    pinMode         (pin, INPUT) ;
+    pinModeWiringPi          (pin, INPUT) ;
     pullUpDnControl (pin, PUD_OFF) ;
   }
 }
@@ -735,8 +733,8 @@ static void doReset (char *progName)
       if (wpiPinToGpio (pin) == -1)
 	continue ;
 
-      digitalWrite    (pin, LOW) ;
-      pinMode         (pin, INPUT) ;
+      digitalWriteWiringPi    (pin, LOW) ;
+      pinModeWiringPi          (pin, INPUT) ;
       pullUpDnControl (pin, PUD_OFF) ;
     }
   }
@@ -764,12 +762,12 @@ void doMode (int argc, char *argv [])
 
   mode = argv [3] ;
 
-  /**/ if (strcasecmp (mode, "in")      == 0) pinMode         (pin, INPUT) ;
-  else if (strcasecmp (mode, "input")   == 0) pinMode         (pin, INPUT) ;
-  else if (strcasecmp (mode, "out")     == 0) pinMode         (pin, OUTPUT) ;
-  else if (strcasecmp (mode, "output")  == 0) pinMode         (pin, OUTPUT) ;
-  else if (strcasecmp (mode, "pwm")     == 0) pinMode         (pin, PWM_OUTPUT) ;
-  else if (strcasecmp (mode, "pwmTone") == 0) pinMode         (pin, PWM_TONE_OUTPUT) ;
+  /**/ if (strcasecmp (mode, "in")      == 0) pinModeWiringPi          (pin, INPUT) ;
+  else if (strcasecmp (mode, "input")   == 0) pinModeWiringPi          (pin, INPUT) ;
+  else if (strcasecmp (mode, "out")     == 0) pinModeWiringPi          (pin, OUTPUT) ;
+  else if (strcasecmp (mode, "output")  == 0) pinModeWiringPi          (pin, OUTPUT) ;
+  else if (strcasecmp (mode, "pwm")     == 0) pinModeWiringPi          (pin, PWM_OUTPUT) ;
+  else if (strcasecmp (mode, "pwmTone") == 0) pinModeWiringPi          (pin, PWM_TONE_OUTPUT) ;
   //else if (strcasecmp (mode, "clock")   == 0) pinMode         (pin, GPIO_CLOCK) ;   /*remove for BananaPro by LeMaker team*/
   else if (strcasecmp (mode, "up")      == 0) pullUpDnControl (pin, PUD_UP) ;
   else if (strcasecmp (mode, "down")    == 0) pullUpDnControl (pin, PUD_DOWN) ;
@@ -835,9 +833,9 @@ static void doWrite (int argc, char *argv [])
     val = atoi (argv [3]) ;
 
   /**/ if (val == 0)
-    digitalWrite (pin, LOW) ;
+    digitalWriteWiringPi (pin, LOW) ;
   else
-    digitalWrite (pin, HIGH) ;
+    digitalWriteWiringPi (pin, HIGH) ;
 }
 
 
@@ -946,7 +944,7 @@ void doToggle (int argc, char *argv [])
 
   pin = atoi (argv [2]) ;
 
-  digitalWrite (pin, !digitalRead (pin)) ;
+  digitalWriteWiringPi (pin, !digitalRead (pin)) ;
 }
 
 

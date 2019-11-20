@@ -156,10 +156,10 @@ extern int  wiringPiSetupGpio   (void) ;
 extern int  wiringPiSetupPhys   (void) ;
 
 extern void pinModeAlt          (int pin, int mode) ;
-extern void pinModeWiringPi     (int pin, int mode) ;
+extern void pinModeWiringPi             (int pin, int mode) ;
 extern void pullUpDnControl     (int pin, int pud) ;
 extern int  digitalRead         (int pin) ;
-extern void digitalWriteWiringPi(int pin, int value) ;
+extern void digitalWriteWiringPi        (int pin, int value) ;
 extern void pwmWrite            (int pin, int value) ;
 extern int  analogRead          (int pin) ;
 extern void analogWrite         (int pin, int value) ;
@@ -204,10 +204,10 @@ extern int piHiPri (const int pri) ;
 
 // Extras from arduino land
 
-// extern void         delay             (unsigned int howLong) ;
-// extern void         delayMicroseconds (unsigned int howLong) ;
-// extern unsigned int millis            (void) ;
-// extern unsigned int micros            (void) ;
+extern void         delayWiringPi               (unsigned int howLong) ;
+extern void         delayMicrosecondsWiringPi   (unsigned int howLong) ;
+extern unsigned int millisWiringPi              (void) ;
+extern unsigned int microsWiringPi              (void) ;
 
 #include "boardtype_friendlyelec.h"
 

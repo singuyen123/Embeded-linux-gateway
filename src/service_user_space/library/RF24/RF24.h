@@ -11,7 +11,7 @@
  *
  * Class declaration for RF24 and helper enums
  */
-extern "C" {
+
 #ifndef __RF24_H__
 #define __RF24_H__
 
@@ -2028,4 +2028,3 @@ private:
  */
 
 #endif // __RF24_H__
-}

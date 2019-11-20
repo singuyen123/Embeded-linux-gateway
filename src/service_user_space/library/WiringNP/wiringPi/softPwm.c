@@ -83,12 +83,12 @@ static PI_THREAD (softPwmThread)
     space = range [pin] - mark ;
 
     if (mark != 0)
-      digitalWrite (pin, HIGH) ;
-    delayMicroseconds (mark * 100) ;
+      digitalWriteWiringPi (pin, HIGH) ;
+    delayMicrosecondsWiringPi (mark * 100) ;
 
     if (space != 0)
-      digitalWrite (pin, LOW) ;
-    delayMicroseconds (space * 100) ;
+      digitalWriteWiringPi (pin, LOW) ;
+    delayMicrosecondsWiringPi (space * 100) ;
   }
 
   return NULL ;
@@ -131,8 +131,8 @@ int softPwmCreate (int pin, int initialValue, int pwmRange)
   if (range <= 0)
     return -1 ;
 
-  pinMode      (pin, OUTPUT) ;
-  digitalWrite (pin, LOW) ;
+  pinModeWiringPi       (pin, OUTPUT) ;
+  digitalWriteWiringPi (pin, LOW) ;
 
   marks [pin] = initialValue ;
   range [pin] = pwmRange ;
@@ -162,6 +162,6 @@ void softPwmStop (int pin)
     pthread_cancel (threads [pin]) ;
     pthread_join   (threads [pin], NULL) ;
     range [pin] = 0 ;
-    digitalWrite (pin, LOW) ;
+    digitalWriteWiringPi (pin, LOW) ;
   }
 }

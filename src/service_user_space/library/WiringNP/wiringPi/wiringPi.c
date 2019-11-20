@@ -1132,7 +1132,7 @@ void sunxi_pwm_set_enable(int en) {
     if (wiringPiDebug)
         printf(">>function%s,no:%d,enable? :0x%x\n", __func__, __LINE__, val);
     writel(val, SUNXI_PWM_CTRL_REG);
-    delay(1);
+    delayWiringPi(1);
     print_pwm_reg();
 }
 
@@ -1151,7 +1151,7 @@ void sunxi_pwm_set_mode(int mode) {
     if (wiringPiDebug)
         printf(">>function%s,no:%d,mode? :0x%x\n", __func__, __LINE__, val);
     writel(val, SUNXI_PWM_CTRL_REG);
-    delay(1);
+    delayWiringPi(1);
     print_pwm_reg();   
 }
 
@@ -1170,7 +1170,7 @@ void sunxi_pwm_set_clk(int clk) {
     sunxi_pwm_set_enable(1);
     if (wiringPiDebug)
         printf(">>function%s,no:%d,clk? :0x%x\n", __func__, __LINE__, val);
-    delay(1);
+    delayWiringPi(1);
     print_pwm_reg();
 }
 
@@ -1187,7 +1187,7 @@ uint32_t sunxi_pwm_get_period(void) {
     period_cys = period_cys >> 16;
     if (wiringPiDebug)
         printf(">>func:%s,no:%d,period/range:%d", __func__, __LINE__, period_cys);
-    delay(1);
+    delayWiringPi(1);
     return period_cys;
 }
 
@@ -1197,7 +1197,7 @@ uint32_t sunxi_pwm_get_act(void) {
     period_act &= 0xffff; //get period_act
     if (wiringPiDebug)
         printf(">>func:%s,no:%d,period/range:%d", __func__, __LINE__, period_act);
-    delay(1);
+    delayWiringPi(1);
     return period_act;
 }
 
@@ -1216,7 +1216,7 @@ void sunxi_pwm_set_period(int period_cys) {
     if (wiringPiDebug)
         printf("write reg val: 0x%x\n", period_cys);
     writel(period_cys, SUNXI_PWM_CH0_PERIOD);
-    delay(1);
+    delayWiringPi(1);
     val = readl(SUNXI_PWM_CH0_PERIOD);
     if (wiringPiDebug)
         printf("readback reg val: 0x%x\n", val);
@@ -1237,7 +1237,7 @@ void sunxi_pwm_set_act(int act_cys) {
     if (wiringPiDebug)
         printf("write reg val: 0x%x\n", act_cys);
     writel(act_cys, SUNXI_PWM_CH0_PERIOD);
-    delay(1);
+    delayWiringPi(1);
     print_pwm_reg();
 }
 
@@ -1396,7 +1396,7 @@ void sunxi_set_gpio_mode(int pin, int mode) {
     if (wiringPiDebug)
       printf(">>>>>line:%d PWM mode ready to set val: 0x%x\n", __LINE__, regval);
     writel(regval, phyaddr);
-    delayMicroseconds(200);
+    delayMicrosecondsWiringPi(200);
     regval = readl(phyaddr);
     if (wiringPiDebug) 
     printf("<<<<<PWM mode set over reg val: 0x%x\n", regval);
@@ -1409,7 +1409,7 @@ void sunxi_set_gpio_mode(int pin, int mode) {
     sunxi_pwm_set_act(512);
     pwmSetMode(PWM_MODE_MS);
     sunxi_pwm_set_clk(PWM_CLK_DIV_120); //default clk:24M/120
-    delayMicroseconds(200);
+    delayMicrosecondsWiringPi(200);
   }
 
   return;
@@ -1537,7 +1537,7 @@ void sunxi_pullUpDnControl(int pin, int pud) {
     } else {
         printf("pin number error\n");
     }
-    delay(1);
+    delayWiringPi(1);
     return;
 }
 /*end 2014.09.18*/
@@ -2434,21 +2434,21 @@ void digitalWriteByte(int value) {
     if (wiringPiMode == WPI_MODE_GPIO_SYS || wiringPiMode == WPI_MODE_GPIO) {
         for (pin = 0; pin < 8; ++pin) {
             pinModeWiringPi(pin, OUTPUT);
-            delay(1);
+            delayWiringPi(1);
             digitalWriteWiringPi(pinToGpio [pin], value & mask);
             mask <<= 1;
         }
     } else if (wiringPiMode == WPI_MODE_PINS) {
         for (pin = 0; pin < 8; ++pin) {
             pinModeWiringPi(pin, OUTPUT);
-            delay(1);
+            delayWiringPi(1);
             digitalWriteWiringPi(pin, value & mask);
             mask <<= 1;
         }
     } else {
         for (pin = 0; pin < 8; ++pin) {
             pinModeWiringPi(head2win[pin], OUTPUT);
-            delay(1);
+            delayWiringPi(1);
             digitalWriteWiringPi(head2win[pin], value & mask);
             mask <<= 1;
         }
@@ -2582,12 +2582,12 @@ static void initialiseEpoch(void) {
 }
 
 /*
- * delay:
+ * delayWiringPi:
  *	Wait for some number of milliseconds
  *********************************************************************************
  */
 
-void delay(unsigned int howLong) {
+void delayWiringPi(unsigned int howLong) {
     struct timespec sleeper, dummy;
 
     sleeper.tv_sec = (time_t) (howLong / 1000);
@@ -2626,7 +2626,7 @@ void delayMicrosecondsHard(unsigned int howLong) {
         gettimeofday(&tNow, NULL);
 }
 
-void delayMicroseconds(unsigned int howLong) {
+void delayMicrosecondsWiringPi(unsigned int howLong) {
     struct timespec sleeper;
     unsigned int uSecs = howLong % 1000000;
     unsigned int wSecs = howLong / 1000000;
@@ -2648,7 +2648,7 @@ void delayMicroseconds(unsigned int howLong) {
  *********************************************************************************
  */
 
-unsigned int millis(void) {
+unsigned int millisWiringPi(void) {
     struct timeval tv;
     uint64_t now;
 
@@ -2664,7 +2664,7 @@ unsigned int millis(void) {
  *********************************************************************************
  */
 
-unsigned int micros(void) {
+unsigned int microsWiringPi(void) {
     struct timeval tv;
     uint64_t now;
 

@@ -35,22 +35,6 @@
 
 #include <wiringPi.h>
 
-#include <mcp23008.h>
-#include <mcp23016.h>
-#include <mcp23017.h>
-#include <mcp23s08.h>
-#include <mcp23s17.h>
-#include <sr595.h>
-#include <pcf8591.h>
-#include <pcf8574.h>
-#include <max31855.h>
-#include <max5322.h>
-#include <mcp3002.h>
-#include <mcp3004.h>
-#include <mcp4802.h>
-#include <mcp3422.h>
-#include <sn3218.h>
-#include <drcSerial.h>
 
 #include "extensions.h"
 
