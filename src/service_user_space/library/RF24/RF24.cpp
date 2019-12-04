@@ -591,60 +591,60 @@ bool RF24::begin(void)
 
   uint8_t setup=0;
 
-  #if defined (RF24_LINUX)
+  // #if defined (RF24_LINUX)
 
-	#if defined (MRAA)
-	  GPIO();	
-	  gpio.begin(ce_pin,csn_pin);	
-	#endif
+	// #if defined (MRAA)
+	//   GPIO();	
+	//   gpio.begin(ce_pin,csn_pin);	
+	// #endif
 	
-    #ifdef RF24_RPi
-	  switch(csn_pin){     //Ensure valid hardware CS pin
-	    case 0: break;
-	    case 1: break;
-	    // Allow BCM2835 enums for RPi
-	    case 8: csn_pin = 0; break;
-	    case 7: csn_pin = 1; break;
-	    case 18: csn_pin = 10; break;	//to make it work on SPI1
-	    case 17: csn_pin = 11; break;
-	    case 16: csn_pin = 12; break;
-	    default: csn_pin = 0; break;
-	  }
-    #endif
+  //   #ifdef RF24_RPi
+	//   switch(csn_pin){     //Ensure valid hardware CS pin
+	//     case 0: break;
+	//     case 1: break;
+	//     // Allow BCM2835 enums for RPi
+	//     case 8: csn_pin = 0; break;
+	//     case 7: csn_pin = 1; break;
+	//     case 18: csn_pin = 10; break;	//to make it work on SPI1
+	//     case 17: csn_pin = 11; break;
+	//     case 16: csn_pin = 12; break;
+	//     default: csn_pin = 0; break;
+	//   }
+  //   #endif
 	
-    _SPI.begin(csn_pin);
+  //   _SPI.begin(csn_pin);
 
-	pinMode(ce_pin,OUTPUT);
-	ce(LOW);    
+	// pinMode(ce_pin,OUTPUT);
+	// ce(LOW);    
 
-	delayRF24(100);
+	// delayRF24(100);
   
-  #elif defined(LITTLEWIRE)
-    pinMode(csn_pin,OUTPUT);
-    _SPI.begin();
-    csn(HIGH);
-  #elif defined(XMEGA_D3)
-	if (ce_pin != csn_pin) pinMode(ce_pin,OUTPUT);
-	_SPI.begin(csn_pin);
-	ce(LOW);
-	csn(HIGH);
-	delayRF24(200);
-  #else
-    // Initialize pins
-    if (ce_pin != csn_pin) pinMode(ce_pin,OUTPUT);  
+  // #elif defined(LITTLEWIRE)
+  //   pinMode(csn_pin,OUTPUT);
+  //   _SPI.begin();
+  //   csn(HIGH);
+  // #elif defined(XMEGA_D3)
+	// if (ce_pin != csn_pin) pinMode(ce_pin,OUTPUT);
+	// _SPI.begin(csn_pin);
+	// ce(LOW);
+	// csn(HIGH);
+	// delayRF24(200);
+  // #else
+  //   // Initialize pins
+  //   if (ce_pin != csn_pin) pinMode(ce_pin,OUTPUT);  
   
-    #if ! defined(LITTLEWIRE)
-      if (ce_pin != csn_pin)
-    #endif
-        pinMode(csn_pin,OUTPUT);
+  //   #if ! defined(LITTLEWIRE)
+  //     if (ce_pin != csn_pin)
+  //   #endif
+  //       pinMode(csn_pin,OUTPUT);
     
-    _SPI.begin();
-    ce(LOW);
-  	csn(HIGH);
-  	#if defined (__ARDUINO_X86__)
-		delayRF24(100);
-  	#endif
-  #endif //Linux
+  //   _SPI.begin();
+  //   ce(LOW);
+  // 	csn(HIGH);
+  // 	#if defined (__ARDUINO_X86__)
+	// 	delayRF24(100);
+  // 	#endif
+  // #endif //Linux
 
   // Must allow the radio time to settle else configuration bits will not necessarily stick.
   // This is actually only required following power up but some settling time also appears to

@@ -7,7 +7,7 @@
 RF24 radio(9, 10);  // CE, CSN
 
 //address through which two modules communicate.
-const byte address[6] = "00001";
+const uint64_t address = 0x544d52687CLL;
 
 void setup()
 {
