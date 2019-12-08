@@ -59,25 +59,5 @@ int main() {
     send(sockfd, &data, sizeof(data),0);
     delay(1000);
   }
-  // function for chat
-  /* while (1) {
-    FILE *f = popen("mount | grep /dev/sdb1", "r");
-    if (NULL != f)
-    {
-      if (EOF == fgetc(f))
-      {
-        puts("/dev/sdb1 is NOT mounted");
-      }
-      else
-      {
-        puts("/dev/sdb1 is mounted");
-        
-      }
-      pclose(f);
-    }
-    delay(1000);
-  }*/
-
-  // close the socket
   close(sockfd);
 }

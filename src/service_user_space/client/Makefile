@@ -2,7 +2,7 @@ CXX = gcc
 CXXFLAGS = -g -Wall -Wextra -std=c++1y 
 .PHONY: client 
 
-COMMONDIR := ../common
+COMMONDIR := ../../common
 COMMONOBJS := $(wildcard $(COMMONDIR)/*.o)
 
 INCDIRS := -I$(COMMONDIR) 
