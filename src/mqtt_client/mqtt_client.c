@@ -211,7 +211,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   char *payloadptr;
 
   printf("Message arrived\n");
-  printf("     topic: %s\n", topicName);
+  printf("     topic: %s %d\n", topicName, sizeof(topicName));
   printf("   message: ");
 
   payloadptr = message->payload;
@@ -220,6 +220,9 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
     putchar(*payloadptr++);
   }
   putchar('\n');
+  if (!strncmp(topicName,"sdt_wifi",8)) {
+    publish_mess("sdt_server","{\"type\":\"wifi\"}");
+  }
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);
   return 1;
@@ -231,10 +234,8 @@ void connlost(void *context, char *cause)
   printf("     cause: %s\n", cause);
 }
 
-void subscribe_topic(char *topic, char *msg)
-{
-  MQTTClient_subscribe(client, topic, QOS);
 
+void publish_mess(char *topic, char *msg) {
   pubmsg.payload = msg;
   pubmsg.payloadlen = (int)strlen(msg);
   pubmsg.qos = QOS;
@@ -243,15 +244,11 @@ void subscribe_topic(char *topic, char *msg)
   printf("Waiting for up to %d seconds for publication of %s\n"
          "on topic %s for client with ClientID: %s\n",
          (int)(TIMEOUT / 1000), PAYLOAD, topic, CLIENTID);
-  rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+  while (!rc) {
+    rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+  }
   printf("Message with delivery token %d delivered\n", token);
 
-  do
-  {
-    ch = getchar();
-  } while (ch != 'Q' && ch != 'q');
-
-  MQTTClient_unsubscribe(client, topic);
 }
 
 int main(int argc, char *argv[])
@@ -270,15 +267,15 @@ int main(int argc, char *argv[])
     printf("Failed to connect, return code %d\n", rc);
     exit(EXIT_FAILURE);
   }
-  printf("Subscribing to topic %s\nfor client %s using QoS%d\n\n"
-         "Press Q<Enter> to quit\n\n",
-         TOPIC, CLIENTID, QOS);
-  pthread_create(&thread_netlink1, NULL, netlink_rev, "31");
-  pthread_create(&thread_netlink2, NULL, netlink_rev, "21");
+  MQTTClient_subscribe(client, "sdt_server", QOS);
+  MQTTClient_subscribe(client, "sdt_wifi",QOS);
+  
+  // pthread_create(&thread_netlink1, NULL, netlink_rev, "31");
+  // pthread_create(&thread_netlink2, NULL, netlink_rev, "21");
   // pthread_create(&thread_TCP, NULL, run_socket_tcp, NULL);
   run_socket_tcp();
-  pthread_join(thread_netlink1, NULL);
-  pthread_join(thread_netlink2, NULL);
+  // pthread_join(thread_netlink1, NULL);
+  // pthread_join(thread_netlink2, NULL);
   while (1)
     ;
 

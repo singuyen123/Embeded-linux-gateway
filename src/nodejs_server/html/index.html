@@ -1,0 +1,32 @@
+
+<head>
+	<script src="/socket.io/socket.io.js"></script>
+    <script src="/js/jquery.js"></script>
+	<script src="/js/index.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/index.css">
+</head>>
+<body>
+<div class="sidebar"><h1 class="rotate">IoTGATEWAY</h1></div>
+<div class="panels" id="touchFlow">
+	<div class="panel1" >
+		<h1><i class="material-icons">highlight</i> Luces</h1>
+		<a href="#" class="a-noeffect"><div class="button color-white">Luz salón</div></a>
+		<a href="#" class="a-noeffect"><div class="button color-white">Luz mesa</div></a>
+		<a href="#" class="a-noeffect"><div class="button color-white">Luz habitación</div></a>
+	</div>
+	<div class="panel2">
+		<h1><i class="material-icons">vpn_key</i> Puertas</h1>
+			<a href="#" class="a-noeffect"><div class="button color-white">Puerta entrada</div></a>
+			<a href="#" class="a-noeffect"><div class="button color-white">Puerta casa</div></a>
+			<a href="#" class="a-noeffect"><div class="button color-white">Puerta apartamento</div></a>
+	</div>
+	<div class="panel3">
+		<h1><i class="material-icons"></i> air-conditioner</h1>
+		<a href="#" class="a-noeffect"><div style="background-color:rgb(44, 45, 46)" class="half-button color-white" onclick="control_temperature(1)" >+1</div></a>
+		<a href="#" class="a-noeffect"><div class="half-button color-white" onclick="control_temperature(-1)">-1</div></a>
+		<a href="#" class="a-noeffect"><div class="button color-green" id="termostato">15º</div></a>
+		<a href="#" class="a-noeffect"><div class="button color-green" id="termostato">15º</div></a>
+	</div>
+	<div class="panel4"><h1><i class="material-icons">radio</i> Radio</h1></div>
+	</div>
+</body>
