@@ -11,6 +11,7 @@ var server = http.createServer(app);
 var io = socketio(server);
 var MongoClient = require('mongodb').MongoClient;
 var url = "mongodb://localhost:27017/linux-gateway";
+var data;
 
 MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
   if (err) throw err;
@@ -23,14 +24,14 @@ server.listen(PORT, function () {
 })
 
 app.get('/', function (req, res) {
-  res.sendfile('html/hello.html');
+  res.sendfile('html/index.html');
 });
 var allWebClients = [];
 var mqtt = require('mqtt')
 var mqtt_client = mqtt.connect('mqtt://test.mosquitto.org')
 
 mqtt_client.on('connect', function () {
-  mqtt_client.subscribe('USB', function (err) {
+  mqtt_client.subscribe('sdt_server', function (err) {
     
     if (!err) {
       mqtt_client.publish('USB', 'Hello mqtt');
@@ -41,7 +42,11 @@ mqtt_client.on('connect', function () {
 mqtt_client.on('message', function (topic, message) {
   // message is Buffer
   console.log(message.toString())
+  data = JSON.parse(message);
+  console.log(data.type);
   allWebClients.forEach(function(socket) {
+    data = JSON.parse(message);
+    console.log(data.type);
     socket.emit("USB", message);
   })
 })

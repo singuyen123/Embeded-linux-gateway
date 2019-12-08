@@ -40,5 +40,4 @@ struct Data {
     union MSG msg;
 };
 
-
 #endif  // COMMON_DATA_H_
