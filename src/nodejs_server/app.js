@@ -10,14 +10,14 @@ var socketio = require('socket.io');			//#include thu vien socketio
 var server = http.createServer(app);
 var io = socketio(server);
 var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://localhost:27017/linux-gateway";
+var url = "mongodb://localhost:27017/mydb";
 var data;
 
-MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, db) {
+/*MongoClient.connect(url, { useNewUrlParser:true, useUnifiedTopology: true }, function(err, db) {
   if (err) throw err;
   console.log("Database created!");
   db.close();
-});
+});*/
 
 server.listen(PORT, function () {
   console.log("Server running at address: " + ip.address() + ":" + PORT)

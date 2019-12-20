@@ -3,7 +3,7 @@
 #include <stdio.h>
 enum Node {
     kUart,
-    kI2c,
+    kLora,
     kUSB,
     kSPI,
     kWifi

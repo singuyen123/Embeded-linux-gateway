@@ -180,11 +180,8 @@ void *run_socket_tcp()
         }
         switch (data.node)
         {
-        case kI2c:
-          printf("msg recive from I2C\n");
-          break;
         case kUart:
-          printf("msg recive: from UART with data: %f\n", data.msg.uart.dmsg);
+          printf("msg recive: from UART with data: %s\n", data.msg.uart.dmsg);
           break;
         case kSPI:
           printf("msg recive: from SPI with data: %d\n", data.msg.spi.dspi);
