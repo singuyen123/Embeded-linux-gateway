@@ -23,10 +23,6 @@
 #define MAX 80
 #define PORT_TCP 6997
 #define SA struct sockaddr
-/* define for netlink*/
-#define NETLINK_USER 31
-#define NETLINK_USER1 21
-#define MAX_PAYLOAD 1024 /* maximum payload size*/
 
 MQTTClient client;
 MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
@@ -35,61 +31,6 @@ MQTTClient_deliveryToken token;
 int rc;
 int ch;
 struct Data data;
-
-/* code netlink*/
-void *netlink_rev(void *netlink_user)
-{
-  struct sockaddr_nl src_addr, dest_addr;
-  struct nlmsghdr *nlh = NULL;
-  struct iovec iov;
-  int sock_fd;
-  struct msghdr msg;
-  int nl = atoi(netlink_user);
-  sock_fd = socket(PF_NETLINK, SOCK_RAW, nl);
-  if (sock_fd < 0)
-    return -1;
-
-  memset(&src_addr, 0, sizeof(src_addr));
-  src_addr.nl_family = AF_NETLINK;
-  src_addr.nl_pid = getpid(); /* self pid */
-
-  bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr));
-
-  memset(&dest_addr, 0, sizeof(dest_addr));
-  memset(&dest_addr, 0, sizeof(dest_addr));
-  dest_addr.nl_family = AF_NETLINK;
-  dest_addr.nl_pid = 0;    /* For Linux Kernel */
-  dest_addr.nl_groups = 0; /* unicast */
-
-  nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
-  memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
-  nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
-  nlh->nlmsg_pid = getpid();
-  nlh->nlmsg_flags = 0;
-
-  strcpy(NLMSG_DATA(nlh), "Hello");
-
-  iov.iov_base = (void *)nlh;
-  iov.iov_len = nlh->nlmsg_len;
-  msg.msg_name = (void *)&dest_addr;
-  msg.msg_namelen = sizeof(dest_addr);
-  msg.msg_iov = &iov;
-  msg.msg_iovlen = 1;
-
-  printf("Sending message to kernel\n");
-  sendmsg(sock_fd, &msg, 0);
-  printf("Waiting for message from kernel\n");
-
-  /* Read message from kernel */
-  while (1)
-  {
-    recvmsg(sock_fd, &msg, 0);
-    printf("Received message payload: %s\n", (char *)NLMSG_DATA(nlh));
-  }
-
-  close(sock_fd);
-}
-/* end code netlink*/
 
 /* code socket TCP*/
 
@@ -155,7 +96,7 @@ void *run_socket_tcp()
         if (connfd < 0)
         {
           printf("server acccept failed...\n");
-          exit(0);
+          // exit(0);
         }
         else
         {
@@ -173,6 +114,7 @@ void *run_socket_tcp()
         rc = recv(poll_fds[i].fd, &data, sizeof(data), 0);
         if (rc <= 0)
         {
+          printf("send error: %s\n",strerror(errno));
           printf("client disconected\n");
           close(poll_fds[i].fd);
           nfds--;
@@ -181,11 +123,14 @@ void *run_socket_tcp()
         switch (data.node)
         {
         case kUart:
-          printf("msg recive: from UART with data: %s\n", data.msg.uart.dmsg);
+          printf("msg recive: from UART with data: %s\n", data.packet.uart.msg);
           break;
-        case kSPI:
-          printf("msg recive: from SPI with data: %d\n", data.msg.spi.dspi);
+        case kLora:
+          printf("msg recive: from lora with data: %s\n", data.packet.lora.msg);
           break;
+	      case kNRF:
+	        printf("msg recive: from nrf with data %s\n", data.packet.nrf.msg);
+	        break;
         }
       }
     }
@@ -267,12 +212,7 @@ int main(int argc, char *argv[])
   MQTTClient_subscribe(client, "sdt_server", QOS);
   MQTTClient_subscribe(client, "sdt_wifi",QOS);
   
-  // pthread_create(&thread_netlink1, NULL, netlink_rev, "31");
-  // pthread_create(&thread_netlink2, NULL, netlink_rev, "21");
-  // pthread_create(&thread_TCP, NULL, run_socket_tcp, NULL);
   run_socket_tcp();
-  // pthread_join(thread_netlink1, NULL);
-  // pthread_join(thread_netlink2, NULL);
   while (1)
     ;
 

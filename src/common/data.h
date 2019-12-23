@@ -4,16 +4,12 @@
 enum Node {
     kUart,
     kLora,
-    kUSB,
+    kNRF,
     kSPI,
     kWifi
 };
 
-struct DataSpi {
-    char msg[50];
-    int dspi;
-};
-struct DataI2c {
+struct DataNRF {
     char address[2];
     char msg[50];
 };
@@ -23,7 +19,7 @@ struct DataUart {
     double dmsg;
 };
 
-struct DataUsb {
+struct DataLora {
     char device_name[20];
     char msg[50];
 };
@@ -35,16 +31,15 @@ struct DataWifi {
 };
 
 union MSG {
-	struct DataI2c i2c;
+	struct DataNRF nrf;
 	struct DataUart uart;
-	struct DataUsb usb;
+	struct DataLora lora;
 	struct DataWifi wifi;
-    struct DataSpi spi;
 };
 
 struct Data {
     enum Node node;
-    union MSG msg;
+    union MSG packet;
 };
 
 
