@@ -2,16 +2,20 @@
 #include <LoRa.h>
 
 int counter = 0;
-#define RFM95_RST 9 //RST of Lora connected to pin 9
-String stringData="";
-int keyData = "97";
-int value = 7.9;
+#define RST 9 //RST of Lora connected to pin 9
+String stringData = "";
+int idNode = 95;
+float valueTemp = 0.0;
+float valueHum = 0.0;
+float valueGas = 0.0;
+float valuePres = 0.0;
+float valueRain = 0.0;
 void setup() {
   Serial.begin(9600);
-  pinMode(RFM95_RST, OUTPUT); 
-  digitalWrite(RFM95_RST, LOW);
+  pinMode(RST, OUTPUT); 
+  digitalWrite(RST, LOW);
   delay(10);
-  digitalWrite(RFM95_RST, HIGH);
+  digitalWrite(RST, HIGH);
   delay(10);
   while (!Serial);
 
@@ -39,29 +43,33 @@ void loop() {
   // send packet
   LoRa.beginPacket();
 
-  stringData+='{';
-  stringData+='"';
-  stringData+="keynode";
-  stringData+='"';
-  stringData+=':';
-  //mystring+='"'+t+'"';
-  stringData+=keyData;
-  stringData+=",";
-  stringData+='"';
-  stringData+="Temp";
-  stringData+='"';
-  stringData+=':';
-  stringData+=value;
-  stringData+='}';
+  stringData = "{\"id\":";
+  stringData += idNode;
+  /*temp*/
+  stringData += ",\"t\":";
+  stringData += valueTemp;
+  /*humidity*/
+  stringData += ",\"h\":";
+  stringData += valueHum;
+  /*gas air*/
+  stringData += ",\"g\":";
+  stringData += valueGas;
+  /*pressure*/
+  stringData += ",\"p\":";
+  stringData += valuePres;
+  /*rain*/
+  stringData += ",\"r\":";
+  stringData += valueRain;
+  stringData += '}';
 
   Serial.println(stringData);
   LoRa.println(stringData);
-  stringData="";
+  stringData = "";
   
   LoRa.endPacket();
 
   counter++;
   Serial.println("end");
 
-  delay(1000);
+  delay(200);
 }

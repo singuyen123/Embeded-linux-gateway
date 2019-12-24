@@ -11,23 +11,23 @@ enum Node {
 
 struct DataNRF {
     char address[2];
-    char msg[50];
+    char msg[255];
 };
 
 struct DataUart {
-    char msg[50];
+    char msg[255];
     double dmsg;
 };
 
 struct DataLora {
     char device_name[20];
-    char msg[50];
+    char msg[255];
 };
 
 struct DataWifi {
     char ip[15];
     char device_name[20];
-    char msg[50];
+    char msg[255];
 };
 
 union MSG {

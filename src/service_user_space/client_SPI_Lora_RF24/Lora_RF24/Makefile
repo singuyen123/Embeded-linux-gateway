@@ -17,7 +17,7 @@ REMOTE_ERROR="[ERROR] Remote machine not configured. Run configure with respecti
 include $(CONFIG_FILE)
 
 # Objects to compile
-OBJECTS=RF24.o LoRa.o
+OBJECTS=RF24.o LoRa.o timer.o
 ifeq ($(DRIVER), MRAA)
 OBJECTS+=spi.o gpio.o compatibility.o
 else ifeq ($(DRIVER), RPi)
@@ -58,6 +58,9 @@ interrupt.o: $(DRIVER_DIR)/interrupt.c
 
 LoRa.o: LoRa.c
 	gcc -c LoRa.c -o LoRa.o -lpigpio -lrt -pthread -lm
+
+timer.o: timer.c
+	gcc -c timer.c -o timer.o -lrt -pthread -lm 
 	
 # clear configuration files
 cleanconfig:
