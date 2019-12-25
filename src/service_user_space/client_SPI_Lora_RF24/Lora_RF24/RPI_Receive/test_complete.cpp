@@ -158,17 +158,12 @@ int main(int argc, char** argv){
     modem.eth.implicitHeader = 0;//Explicit header mode
     modem.eth.syncWord = 0x12;
 
-	// radio.begin();	
-	// radio.setRetries(15,15);
-	// //radio.setPayloadSize(255);
 
-	// radio.printDetails();
-	// radio.openReadingPipe(0, address);
 	while(1)
 	{
 		switch (select) {
 			case 0:
-			 //	radio.stopListening();
+			
 				gpioWrite(gpio_A, 0);
 				gpioWrite(gpio_B, 0);
 				gpioWrite(gpio_C, 0);
@@ -177,46 +172,42 @@ int main(int argc, char** argv){
 				LoRa_begin(&modem);
 				LoRa_receive(&modem);
 				printf("Lora 00\n");
-				sleep(10);
-				// if (start_timer(2000, &timer_handler_lora))
-				// {
-				//    printf("\n timer error\n");
-				// }
 
-				// while(1)
-				// {
-				// 	if(countLora > 2)
-				// 	{
-				// 		break;
-				// 	}
+				if (start_timer(2000, &timer_handler_lora))
+				{
+				   printf("\n timer error\n");
+				}
 
-				// }
-				// stop_timer();
-				// countLora=0;
+				while(1)
+				{
+					if(countLora > 2)
+					{
+						break;
+					}
+
+				}
+				stop_timer();
+				countLora = 0;
 				LoRa_end(&modem);
 				gpioWrite(gpio_26, 1);
 				break;
 			case 1:
 			{
 				printf("RF24_00\n");
-				//LoRa_end(&modem);
 				gpioWrite(gpio_A, 1);
 				gpioWrite(gpio_B, 1);
 				gpioWrite(gpio_C, 1);
 		
 				radio.begin();	
 				radio.setRetries(15,15);
-				//radio.setPayloadSize(255);
 				radio.setRetries(15,15);
-				//radio.printDetails();
 				radio.openReadingPipe(0, address);
 				radio.startListening();
 				
-				// if (start_timer(2000, &timer_handler))
-				// {
-				//    printf("\n timer error\n");
-				// 		//continue;
-				// }
+				if (start_timer(2000, &timer_handler))
+				{
+				   printf("\n timer error\n");
+				}
 				printf("========================start receive=========================\n");
 				while (count<4){
 					if ( radio.available() )
@@ -248,173 +239,184 @@ int main(int argc, char** argv){
 					//sleep(1);
 					}
 				}
-			//	stop_timer();
+				stop_timer();
 				count = 0;
 				radio.stopListening();
 				radio.closeReadingPipe(0);
 		        radio.powerDown();
-
 				gpioWrite(gpio_26, 0);
-			//	sleep(2);
 				break;
 			}
 			case 2:
-// 				radio.stopListening();
-// 				gpioWrite(gpio_A, 1);
-// 				gpioWrite(gpio_B, 0);
-// 				gpioWrite(gpio_C, 0);
-// 				LoRa_begin(&modem);
-// 				LoRa_receive(&modem);
-// //				sleep(2);
-// 				printf("Lora 01\n");
-// 				if (start_timer(2000, &timer_handler_lora))
-// 				{
-// 				   printf("\n timer error\n");
-// 				}
+				gpioWrite(gpio_A, 1);
+				gpioWrite(gpio_B, 0);
+				gpioWrite(gpio_C, 0);
+				gpioWrite(gpio_26, 0);
 
-// 				while(1)
-// 				{
-// 					if(countLora > 2)
-// 					{
-// 						break;
-// 					}
+				LoRa_begin(&modem);
+				LoRa_receive(&modem);
+				printf("Lora 01\n");
 
-// 				}
-// 				stop_timer();
-// 				countLora=0;
+				if (start_timer(2000, &timer_handler_lora))
+				{
+				   printf("\n timer error\n");
+				}
+
+				while(1)
+				{
+					if(countLora > 2)
+					{
+						break;
+					}
+
+				}
+				stop_timer();
+				countLora = 0;
+				LoRa_end(&modem);
+				gpioWrite(gpio_26, 1);
 				break;
+
 			case 3:
 
 			 {
-			// 	printf("RF24_01\n");
-			// 	//LoRa_end(&modem);
-			// 	gpioWrite(gpio_A, 0);
-			// 	gpioWrite(gpio_B, 1);
-			// 	gpioWrite(gpio_C, 1);
+				printf("RF24_01\n");
+				//LoRa_end(&modem);
+				gpioWrite(gpio_A, 0);
+				gpioWrite(gpio_B, 1);
+				gpioWrite(gpio_C, 1);
+                radio.begin();	
+				radio.setRetries(15,15);
+				radio.setRetries(15,15);
+				radio.openReadingPipe(0, address);
+				radio.startListening();
+				
+				if (start_timer(2000, &timer_handler))
+				{
+				   printf("\n timer error\n");
+				}
+				printf("========================start receive=========================\n");
+				while (count<4){
+					if ( radio.available() )
+					{
+					//	printf("RF24_00\n");
+	
+						memset(nrfbuff,'\0',sizeof(nrfbuff));
+						radio.read( &nrfbuff, sizeof(nrfbuff));
 
-			// 	radio.begin();	
-			// 	radio.setRetries(15,15);
-			// 	radio.openReadingPipe(0, address);				
-			// 	radio.startListening();
-
-			// 	if (start_timer(2000, &timer_handler))
-			// 	{
-			// 	   printf("\n timer error\n");
-			// 			//continue;
-			// 	}
-
-			// 	while (count <4){
-
-			// 		if ( radio.available() )
-			// 		{
-			// 		//	printf("RF24_01 \n");
-			// 			memset(nrfbuff,'\0',sizeof(nrfbuff));
-			// 			radio.read( &nrfbuff,sizeof(nrfbuff));
-
-			// 			parsed_json = json_tokener_parse(nrfbuff);
-			// 			json_object_object_get_ex(parsed_json,"id",&idNode); 
-			// 			checkResponse = json_object_get_int(idNode);
-			// 			//printf("checkResponse_RF24_00 = %d\n",checkResponse);
-			// 	      //  printf("Received RF24_01--- : %s\n", nrfbuff);
-			// 			if(checkResponse == idRF24)
-			// 			{
-			// 				data.node = kNRF;
-			// 				strcpy(data.packet.nrf.msg, nrfbuff);
-			// 				rc = send(sockfd, &data, sizeof(data), 0);
-			// 				if(rc<=0)
-			// 				{
-			// 					printf("send error: %s\n",strerror(errno));
-			// 				}
-			// 				count++;
-			// 			}
-			// 		}
-			// 	}
-			// 	  stop_timer();
-			//     count = 0;
-
-			// 	radio.stopListening();
-			// 	radio.closeReadingPipe(0);
-		    //     radio.powerDown();
+						parsed_json = json_tokener_parse(nrfbuff);
+						json_object_object_get_ex(parsed_json,"id",&idNode); 
+						checkResponse = json_object_get_int(idNode);
+						//printf("checkResponse_RF24_00 = %d\n",checkResponse);
+					//	printf("Received _RF24_00 --- : %s\n", nrfbuff);
+						if(checkResponse == idRF24)
+						{
+							data.node = kNRF;
+							strcpy(data.packet.nrf.msg, nrfbuff);
+							rc = send(sockfd, &data, sizeof(data), 0);
+							if(rc<=0)
+							{
+								printf("send error: %s\n",strerror(errno));
+							}
+							count++;
+						}
+						//count++;
+					
+					//	delayMicroseconds(500000);
+					//sleep(1);
+					}
+				}
+				stop_timer();
+				count = 0;
+				radio.stopListening();
+				radio.closeReadingPipe(0);
+		        radio.powerDown();
+				gpioWrite(gpio_26, 0);
 				break;
 			}
 			case 4:
 				// radio.stopListening();
-				// gpioWrite(gpio_A, 0);
-				// gpioWrite(gpio_B, 1);
-				// gpioWrite(gpio_C, 0);
-				// LoRa_begin(&modem);
-				// LoRa_receive(&modem);
-				// //sleep(2);
-				// printf("Lora 02\n");
-				// if (start_timer(2000, &timer_handler_lora))
-				// {
-				//    printf("\n timer error\n");
-				// }
+				gpioWrite(gpio_A, 0);
+				gpioWrite(gpio_B, 1);
+				gpioWrite(gpio_C, 0);
+                gpioWrite(gpio_26, 0);
 
-				// while(1)
-				// {
-				// 	if(countLora > 2)
-				// 	{
-				// 		break;
-				// 	}
+				LoRa_begin(&modem);
+				LoRa_receive(&modem);
+				printf("Lora 02\n");
 
-				// }
-				// stop_timer();
-				// countLora=0;
+				if (start_timer(2000, &timer_handler_lora))
+				{
+				   printf("\n timer error\n");
+				}
 
+				while(1)
+				{
+					if(countLora > 2)
+					{
+						break;
+					}
+
+				}
+				stop_timer();
+				countLora = 0;
+				LoRa_end(&modem);
+				gpioWrite(gpio_26, 1);
 				break;
 			case 5:
 
 			{
-			// 	printf("RF24_02\n");
-			// //	LoRa_end(&modem);
-			// 	gpioWrite(gpio_A, 1);
-			// 	gpioWrite(gpio_B, 0);
-			// 	gpioWrite(gpio_C, 1);
+				printf("RF24_02\n");
+			//	LoRa_end(&modem);
+				gpioWrite(gpio_A, 1);
+				gpioWrite(gpio_B, 0);
+				gpioWrite(gpio_C, 1);
+            radio.begin();	
+				radio.setRetries(15,15);
+				radio.setRetries(15,15);
+				radio.openReadingPipe(0, address);
+				radio.startListening();
+				
+				if (start_timer(2000, &timer_handler))
+				{
+				   printf("\n timer error\n");
+				}
+				printf("========================start receive=========================\n");
+				while (count<4){
+					if ( radio.available() )
+					{
+					//	printf("RF24_00\n");
+	
+						memset(nrfbuff,'\0',sizeof(nrfbuff));
+						radio.read( &nrfbuff, sizeof(nrfbuff));
 
-			// 	radio.begin();	
-			// 	radio.setRetries(15,15);
-			// 	radio.openReadingPipe(0, address);
-			// 	radio.startListening();
-		
-			// 	if (start_timer(2000, &timer_handler))
-			// 	{
-			// 	   printf("\n timer error\n");
-			// 			//continue;
-			// 	}
-
-			// 	while (count <4){
-
-			// 		if ( radio.available() )
-			// 		{
-			// 		//	printf("RF24_02\n");
-			// 			memset(nrfbuff,'\0',sizeof(nrfbuff));
-			// 			radio.read( &nrfbuff,sizeof(nrfbuff));
-
-			// 			parsed_json = json_tokener_parse(nrfbuff);
-			// 			json_object_object_get_ex(parsed_json,"id",&idNode); 
-			// 			checkResponse = json_object_get_int(idNode);
-			// 			//printf("checkResponse_RF24_00 = %d\n",checkResponse);
-			// 			//printf("Received RF24_02--- : %s\n", nrfbuff);
-			// 			if(checkResponse == idRF24)
-			// 			{
-							
-			// 				data.node = kNRF;
-			// 				strcpy(data.packet.nrf.msg, nrfbuff);
-			// 				rc = send(sockfd, &data, sizeof(data), 0);
-			// 				if(rc<=0)
-			// 				{
-			// 					printf("send error: %s\n",strerror(errno));
-			// 				}
-			// 				count++;
-			// 			}
-			// 		}
-			// 	}
-			// 	stop_timer();
-			// 	count = 0;
-			// 	radio.stopListening();
-			// 	radio.closeReadingPipe(0);
-		    //     radio.powerDown();				
+						parsed_json = json_tokener_parse(nrfbuff);
+						json_object_object_get_ex(parsed_json,"id",&idNode); 
+						checkResponse = json_object_get_int(idNode);
+						//printf("checkResponse_RF24_00 = %d\n",checkResponse);
+					//	printf("Received _RF24_00 --- : %s\n", nrfbuff);
+						if(checkResponse == idRF24)
+						{
+							data.node = kNRF;
+							strcpy(data.packet.nrf.msg, nrfbuff);
+							rc = send(sockfd, &data, sizeof(data), 0);
+							if(rc<=0)
+							{
+								printf("send error: %s\n",strerror(errno));
+							}
+							count++;
+						}
+						//count++;
+					
+					//	delayMicroseconds(500000);
+					//sleep(1);
+					}
+				}
+				stop_timer();
+				count = 0;
+				radio.stopListening();
+				radio.closeReadingPipe(0);
+		        radio.powerDown();
+				gpioWrite(gpio_26, 0);			
 				break;
 			}
 
