@@ -2,13 +2,15 @@ OBJSDIR	=	./src
 #source, executable, includes, library Defines
 INCL	+=	./src/uart.h \
 			../../common/data.h  \
-      ./src/wiringSerial1.h
+      ./src/wiringSerial1.h		\
+	  ./src/timer.h
 SRC		+=	./src/uart.c \
 			ClientUART.c  \
+			./src/timer.c \
       ./src/wiringSerial1.c
 OBJ		=	$(SRC:.c=.o)
-EXE		= 	clientUART
-
+EXE		= 	clientUART #bluetooth
+#bluetooth.c	
 
 #compiler, Linker Defines
 CC		=	gcc

@@ -173,7 +173,7 @@ void serialPrintf1 (const int fd, const char *message, ...)
     vsnprintf (buffer, 1023, message, argp) ;
   va_end (argp) ;
 
-  serialPuts (fd, buffer) ;
+  serialPuts1 (fd, buffer) ;
 }
 
 
