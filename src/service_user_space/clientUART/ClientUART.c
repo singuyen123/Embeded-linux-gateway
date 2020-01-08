@@ -16,20 +16,26 @@
 #include "../../common/data.h"
 #include "src/wiringSerial1.h"
 #include "src/timer.h"
-//#include "wiringPi.h"
+#include "json-c/json.h"
 /* define of socket TCP */
 #define MAX 80
 #define PORT 6997
 #define SA struct sockaddr
+#define idBlue 97
+
 
 int sockfd, connfd;
 static const char *device = "/dev/ttyS0";
-
 volatile int fd;
 struct Data data;
 pthread_t id2;
 char c;
 char msg[50];
+
+int rc;
+int checkResponse =0;
+struct json_object *parsed_json;
+struct json_object *idNode;
 /*thread function definition*/
 
 void timer_handler(void);
@@ -78,6 +84,8 @@ int count=0;
 
 int main(int argc, char *argv[])
 {
+  socket_init();
+
    if (start_timer(500, &timer_handler))
   {
     printf("\n timer error\n");
@@ -99,7 +107,20 @@ if((fd = serialOpen1 ("/dev/ttyS0", 115200)) < 0 ){
         }
         else if(num_bytes1==21){
           count++;
-          
+          parsed_json = json_tokener_parse(msg);
+          json_object_object_get_ex(parsed_json, "id", &idNode);
+          checkResponse = json_object_get_int(idNode);
+          printf("checkResponse_Blue = %d\n",checkResponse);
+          if(checkResponse == 37)
+          {
+            data.node = kUart;
+            strcpy(data.packet.uart.msg, msg);
+            rc = send(sockfd,&data,sizeof(data),0);
+            if(rc <= 0)
+            {
+              printf("send error: %s\n", strerror(errno));
+            }
+          }
           printf("count %d . Received message---- : %s\n", count, msg);
         }
           fflush (stdout);
