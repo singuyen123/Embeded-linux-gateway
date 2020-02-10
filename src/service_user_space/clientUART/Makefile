@@ -24,7 +24,7 @@ $(OBJSDIR)/%.o: %.c
 	$(CC) -c $(CFLAGS) $*.c 
 #Link all object files with external Libraries into Binaries
 $(EXE): $(OBJ)
-	$(CC) $(LDFLAGS) $(OBJ) -ljson-c 
+	$(CC) $(LDFLAGS) $(OBJ) -ljson-c -lpaho-mqtt3c 
 #$(EXE2): $(OBJ)	
 #	$(CC) $(LDFLAGS2) $(OBJ)
 # Objects depend on these Libraries

@@ -1,0 +1,2 @@
+/home/pi/workPlace/Embeded-linux-gateway/src/service_user_space/client_SPI_Lora_RF24/Lora_RF24/RPI_Receive/lora_rf24_receive &
+/home/pi/workPlace/Embeded-linux-gateway/src/service_user_space/clientUART/clientUART &

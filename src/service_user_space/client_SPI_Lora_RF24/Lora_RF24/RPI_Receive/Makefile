@@ -18,6 +18,6 @@ endif
 include ../Makefile.inc
 
 # define all programs
-PROGRAMS = lora_rf24_receive test_complete
+PROGRAMS = lora_rf24_receive testRF testLR
 
 include Makefile.examples
