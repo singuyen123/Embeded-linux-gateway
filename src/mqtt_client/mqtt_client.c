@@ -123,14 +123,17 @@ void *run_socket_tcp()
         switch (data.node)
         {
         case kUart:
+          // publish_mess("data_uart",data.packet.uart.msg);
           printf("msg recive: from UART with data: %s\n", data.packet.uart.msg);
           break;
         case kLora:
+	  publish_mess("data_lora",data.packet.uart.msg);
           printf("msg recive: from lora with data: %s\n", data.packet.lora.msg);
           break;
-	      case kNRF:
-	        printf("msg recive: from nrf with data %s\n", data.packet.nrf.msg);
-	        break;
+	case kNRF:
+	  // publish_mess("data_rf",data.packet.uart.msg);
+	  printf("msg recive: from nrf with data %s\n", data.packet.nrf.msg);
+	  break;
         }
       }
     }
@@ -186,9 +189,9 @@ void publish_mess(char *topic, char *msg) {
   printf("Waiting for up to %d seconds for publication of %s\n"
          "on topic %s for client with ClientID: %s\n",
          (int)(TIMEOUT / 1000), PAYLOAD, topic, CLIENTID);
-  while (!rc) {
-    rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-  }
+  // while (!rc) {
+    // rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+  // }
   printf("Message with delivery token %d delivered\n", token);
 
 }
@@ -209,9 +212,10 @@ int main(int argc, char *argv[])
     printf("Failed to connect, return code %d\n", rc);
     exit(EXIT_FAILURE);
   }
-  MQTTClient_subscribe(client, "sdt_server", QOS);
-  MQTTClient_subscribe(client, "sdt_wifi",QOS);
-  
+ 
+  MQTTClient_subscribe(client, "data_lora", QOS);
+  MQTTClient_subscribe(client, "data_rf",QOS);
+  // publish_mess("data_lora","sideptrai"); 
   run_socket_tcp();
   while (1)
     ;

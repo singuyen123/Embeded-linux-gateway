@@ -21,14 +21,19 @@
 #include <RF24/LoRa.h>
 #include <RF24/timer.h>
 #include <json-c/json.h>
+#include "MQTTClient.h"
 #include "../../../../common/data.h"
 
 using namespace std;
 
-/* define of socket TCP */
-#define MAX 80
-#define PORT 6997
-#define SA struct sockaddr
+/* define for mqtt_client */
+#define ADDRESS "test.mosquitto.org"
+#define CLIENTID "ExampleClientSub"
+#define TOPIC "presence"
+#define PAYLOAD "Hello World!"
+#define QOS 1
+#define TIMEOUT 10000L
+
 #define idLora 95
 #define idRF24 96
 
@@ -37,6 +42,12 @@ using namespace std;
 #define gpio_B 20
 #define gpio_A 16
 #define gpio_26 5
+
+MQTTClient client;
+MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
+MQTTClient_message pubmsg = MQTTClient_message_initializer;
+MQTTClient_deliveryToken token;
+int ch;
 
 int sockfd, connfd;
 struct Data data;
@@ -58,7 +69,58 @@ LoRa_ctl modem;
 RF24 radio(22, 0);
 
 /********************************/
+//MQTT 
+volatile MQTTClient_deliveryToken deliveredtoken;
 
+void delivered(void *context, MQTTClient_deliveryToken dt)
+{
+  printf("Message with token value %d delivery confirmed\n", dt);
+  deliveredtoken = dt;
+}
+
+int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
+{
+  int i;
+  char *payloadptr;
+
+  printf("Message arrived\n");
+  printf("     topic: %s %d\n", topicName, sizeof(topicName));
+  printf("   message: ");
+
+  // payloadptr = message->payload;
+  // for (i = 0; i < message->payloadlen; i++)
+  // {
+    // putchar(*payloadptr++);
+  // }
+  putchar('\n');
+  MQTTClient_freeMessage(&message);
+  MQTTClient_free(topicName);
+  return 1;
+}
+
+void connlost(void *context, char *cause)
+{
+  printf("\nConnection lost\n");
+  printf("     cause: %s\n", cause);
+}
+
+void publish_mess(char *topic, char *msg) {
+  pubmsg.payload = msg;
+  pubmsg.payloadlen = (int)strlen(msg);
+  pubmsg.qos = QOS;
+  pubmsg.retained = 0;
+  MQTTClient_publishMessage(client, topic, &pubmsg, &token);
+  printf("Waiting for up to %d seconds for publication of %s\n"
+         "on topic %s for client with ClientID: %s\n",
+         (int)(TIMEOUT / 1000), PAYLOAD, topic, CLIENTID);
+  // while (!rc) {
+    // rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
+  // }
+  printf("Message with delivery token %d delivered\n", token);
+
+}
+
+//end MQTT
 // Radio pipe addresses for the 2 nodes to communicate.
 const uint8_t address[6] = "00001";
 
@@ -74,7 +136,7 @@ void timer_handler_lora(void)
 }
 void rx_f(rxData *rx)
 {
-
+    publish_mess("data_lora",rx->buf);
     parsed_json = json_tokener_parse(rx->buf);
     json_object_object_get_ex(parsed_json, "id", &idNode);
     checkResponse = json_object_get_int(idNode);
@@ -93,41 +155,22 @@ void rx_f(rxData *rx)
     }
 }
 
-void socket_init()
-{
-    struct sockaddr_in servaddr, cli;
-
-    // socket create and varification
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1)
-    {
-        printf("socket creation failed...\n");
-        // exit(0);
-    }
-    else
-        printf("Socket successfully created..\n");
-    bzero(&servaddr, sizeof(servaddr));
-
-    // assign IP, PORT
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    servaddr.sin_port = htons(PORT);
-
-    // connect the client socket to server socket
-    if (connect(sockfd, (SA *)&servaddr, sizeof(servaddr)) != 0)
-    {
-        printf("connection with the server failed...\n");
-        exit(0);
-    }
-    else
-        printf("connected to the server..\n");
-}
-
 int main(int argc, char **argv)
 {
 
     int select = 0;
-    socket_init();
+    MQTTClient_create(&client, ADDRESS, CLIENTID,
+                    MQTTCLIENT_PERSISTENCE_NONE, NULL);
+  conn_opts.keepAliveInterval = 20;
+  conn_opts.cleansession = 1;
+
+  MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, delivered);
+
+  if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
+  {
+    printf("Failed to connect, return code %d\n", rc);
+    exit(EXIT_FAILURE);
+  }
 
     if (gpioInitialise() < 0)
     {
@@ -165,7 +208,7 @@ int main(int argc, char **argv)
         switch (select)
         {
         case 0:
-            printf("------------Lora------------- 00\n");
+           // printf("------------Lora------------- 02\n");
             // gpioWrite(gpio_A, 0);
             // gpioWrite(gpio_B, 0);
             // gpioWrite(gpio_C, 0);
@@ -216,22 +259,16 @@ int main(int argc, char **argv)
                 {
                     memset(nrfbuff, '\0', sizeof(nrfbuff));
                     radio.read(&nrfbuff, sizeof(nrfbuff));
-
                     parsed_json = json_tokener_parse(nrfbuff);
                     json_object_object_get_ex(parsed_json, "id", &idNode);
                     checkResponse = json_object_get_int(idNode);
                     //printf("checkResponse_RF24_00 = %d\n",checkResponse);
-                    printf("Received _RF24_01 --- : %s\n", nrfbuff);
+                    //printf("Received _RF24_01 --- : %s\n", nrfbuff);
                     if (checkResponse == idRF24)
                     {
-                        data.node = kNRF;
-                        strcpy(data.packet.nrf.msg, nrfbuff);
-                        rc = send(sockfd, &data, sizeof(data), 0);
-                        if (rc <= 0)
-                        {
-                            printf("send error: %s\n", strerror(errno));
-                        }
-                        count++;
+                        printf("%s\n",nrfbuff);
+			publish_mess("data_rf",nrfbuff);
+		        count++;
                     }
                 }
             }
@@ -297,18 +334,10 @@ int main(int argc, char **argv)
                     parsed_json = json_tokener_parse(nrfbuff);
                     json_object_object_get_ex(parsed_json, "id", &idNode);
                     checkResponse = json_object_get_int(idNode);
-                    //printf("checkResponse_RF24_02 = %d\n",checkResponse);
-                    //	printf("Received _RF24_02 --- : %s\n", nrfbuff);
                     if (checkResponse == idRF24)
                     {
-                        data.node = kNRF;
-                        strcpy(data.packet.nrf.msg, nrfbuff);
-                        rc = send(sockfd, &data, sizeof(data), 0);
-                        if (rc <= 0)
-                        {
-                            printf("send error: %s\n", strerror(errno));
-                        }
-                        count++;
+                        publish_mess("data_rf",nrfbuff);
+		        count++;
                     }
                 }
             }
@@ -374,16 +403,11 @@ int main(int argc, char **argv)
                     json_object_object_get_ex(parsed_json, "id", &idNode);
                     checkResponse = json_object_get_int(idNode);
                     //printf("checkResponse_RF24_00 = %d\n",checkResponse);
-                    	printf("Received _RF24_00 --- : %s\n", nrfbuff);
+                    //printf("Received _RF24_00 --- : %s\n", nrfbuff);
                     if (checkResponse == idRF24)
                     {
-                        data.node = kNRF;
-                        strcpy(data.packet.nrf.msg, nrfbuff);
-                        rc = send(sockfd, &data, sizeof(data), 0);
-                        if (rc <= 0)
-                        {
-                            printf("send error: %s\n", strerror(errno));
-                        }
+			printf("%s\n",nrfbuff);
+			publish_mess("data_rf",nrfbuff);
                         count++;
                     }
                 }
@@ -399,5 +423,7 @@ int main(int argc, char **argv)
         }
         select = (select + 1) % 6;
     }
+    MQTTClient_disconnect(client, 10000);
+    MQTTClient_destroy(&client);
     return 0;
 }
