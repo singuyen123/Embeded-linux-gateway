@@ -7,6 +7,9 @@
 
 #define tempPin 4
 
+int gas_din=6;                                            // pin 2 ket noi Dout
+int gas_ain=A0; 
+
 Adafruit_BMP280 bmp; // I2C
 
 const int DHTTYPE = DHT11;
@@ -32,6 +35,9 @@ void setup()
 {
   Serial.begin(9600);
   radio.begin();
+    
+  pinMode(gas_din,INPUT);          
+  pinMode(gas_ain,INPUT);
   
   //set the address
   radio.openWritingPipe(address);
@@ -48,7 +54,18 @@ void setup()
 }
 void loop()
 {
-  valueGas = analogRead(A0);
+  valueGas=0;
+  valueHum=0;
+  valuePres=0;
+  valueRain=0;
+  
+  Serial.print("KhiGasDigital:");
+  Serial.println(digitalRead(gas_din));
+  if(digitalRead(gas_din)==0){
+     valueGas = analogRead(gas_ain);
+     Serial.print("KhiGas:");
+     Serial.println(valueGas);
+  }
   valueTemp =  dht.readTemperature();
   valueHum = dht.readHumidity();
   //Serial.println(valueGas);

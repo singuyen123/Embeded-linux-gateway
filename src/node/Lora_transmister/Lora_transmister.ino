@@ -8,6 +8,9 @@
 #define tempPin 4
 int rainSensor = 6;
 
+int gas_din=7;                                            // pin 2 ket noi Dout
+int gas_ain=A2; 
+
 Adafruit_BMP280 bmp; // I2C
 const int DHTTYPE = DHT11;
 DHT dht(tempPin, DHTTYPE);
@@ -25,8 +28,12 @@ volatile int valueRain = 0;
 
 void setup() {
   Serial.begin(9600);
+  
+  pinMode(gas_din,INPUT);          
+  pinMode(gas_ain,INPUT);
   pinMode(rainSensor,INPUT);
   pinMode(RST, OUTPUT); 
+  
   digitalWrite(RST, LOW);
   delay(10);
   digitalWrite(RST, HIGH);
@@ -53,10 +60,20 @@ void setup() {
 }
 
 void loop() {
-  Serial.print("Sending packet: ");
-  Serial.println(counter);
+  valueGas=0;
+  valueHum=0;
+  valuePres=0;
+  valueRain=0;
+  //Serial.print("Sending packet: ");
+  //Serial.println(counter);
   bmp.begin();
-  valueGas = analogRead(A2);
+  Serial.print("KhiGasDigital:");
+  Serial.println(digitalRead(gas_din));
+  if(digitalRead(gas_din)==0){
+     valueGas = analogRead(gas_ain);
+     Serial.print("KhiGas:");
+     Serial.println(valueGas);
+  }
   valueTemp =  dht.readTemperature();
   valueHum = dht.readHumidity();
   //Serial.println(valueGas);
@@ -85,14 +102,14 @@ void loop() {
   stringData += valueRain;
   stringData += '}';
 
-  Serial.println(stringData);
+  //Serial.println(stringData);
   LoRa.println(stringData);
   stringData = "";
   
   LoRa.endPacket();
 
   counter++;
-  Serial.println("end");
+  //Serial.println("end");
 
   delay(200);
 }
