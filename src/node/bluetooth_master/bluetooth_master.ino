@@ -5,6 +5,11 @@
 #include <DHT.h>
 
 #define tempPin 4
+int gas_din=10;                                            // pin 2 ket noi Dout
+int gas_ain=A0; 
+
+int gas_din=10;                                            // pin 2 ket noi Dout
+int gas_ain=A0; 
 
 int gas_din=10;                                            // pin 2 ket noi Dout
 int gas_ain=A0; 
@@ -15,11 +20,11 @@ const int DHTTYPE = DHT11;
 
 String stringData = "";
 const int idNode = 97;
-volatile float valueTemp = 0.0;
-volatile float valueHum = 0.0;
-volatile int valueGas = 0;
-volatile float valuePres = 0.0;
-
+volatile int valueTemp = -1;
+volatile int valueHum = -1;
+volatile int valueGas = -1;
+volatile int valuePres = -1;
+volatile int valuePres_temp = -1;
 DHT dht(tempPin, DHTTYPE);
 // SoftwareSerial mySerial(10, 11);
 
@@ -33,6 +38,14 @@ void setup() {
 
 void loop() {
       bmp.begin();
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+      if(digitalRead(10)==0){
+         valueGas = analogRead(A0);
+      }else valueGas = -1;       
+=======
+>>>>>>> Stashed changes
       valueGas=0;
       valueHum=0;
       valuePres=0;
@@ -46,22 +59,31 @@ void loop() {
          Serial.println(valueGas);
       }
       
+<<<<<<< Updated upstream
+=======
+>>>>>>> b79f3102b35ea12e9b617b45103ee04898c766a1
+>>>>>>> Stashed changes
       valueTemp =  dht.readTemperature();
       valueHum = dht.readHumidity();
-      //Serial.println(valueGas);
       valuePres = bmp.readPressure();
+      if (valuePres_temp == valuePres)
+      {
+        valuePres = -1;
+      }else {
+        valuePres_temp = valuePres;
+      }
      // Serial.println("{\"id\":37,\"data\":45}"); //gửi dữ liệu cho Arduino thứ 2
 
       stringData = "{\"id\":";
       stringData += idNode;
       /*temp*/
-      stringData += ",\"t\":";
+      stringData += ",\"t\":\"";
       stringData += valueTemp;
       /*humidity*/
-      stringData += ",\"h\":";
+      stringData += "\",\"h\":\"";
       stringData += valueHum;
       /*gas air*/
-      stringData += ",\"g\":";
+      stringData += "\",\"g\":";
       stringData += valueGas;
       /*pressure*/
       stringData += ",\"p\":";
@@ -69,11 +91,6 @@ void loop() {
       stringData += '}';
     
       Serial.println(stringData);
-      stringData = "";
-      valuePres = 0.0;
-      valueGas = 0;
-      valueHum = 0.0;
-      valueTemp = 0.0;
       delay(1000);
 
 }

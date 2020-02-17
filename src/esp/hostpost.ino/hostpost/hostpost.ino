@@ -1,13 +1,35 @@
+/*Lib https://circuits4you.com/2019/01/25/interfacing-dht11-with-nodemcu-example/?fbclid=IwAR2cm5vnDtMBI-93_6LzdT8ldhOP9fjGqImZxsKGyQ1xY_MCa6DYMvZm7wQ*/
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <PubSubClient.h>
-#include "data.h"
+#include <SoftwareSerial.h>
+#include "DHTesp.h"
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BMP280.h>
+
+#define DHTpin 14    //D5 of NodeMCU is GPIO14
+
+Adafruit_BMP280 bme; // I2C
+DHTesp dht;
+
+int gas_din=D0;                                            // pin 2 ket noi Dout
+int gas_ain=A0; 
+
+String stringData = "";
+const int idNode = 94;
+volatile float valueTemp = -1;
+volatile float valueHum = -1;
+volatile int valueGas = -1;
+volatile float valuePres = -1;
+volatile float valuePres_temp = -1;
 
 /* Set these to your desired credentials. */
 const char* mqtt_server = "test.mosquitto.org";
 const char *AP_ssid = "AP_chas";
 const char *AP_passkey = "12345678";
-char temp[50];
+char temp[60];
 char ssid[50];
 char pass[50];
 long lastMsg = 0;
@@ -16,7 +38,6 @@ int value = 0;
 int status = WL_IDLE_STATUS;
 WiFiClient client1;
 PubSubClient client_mqtt(client1);
-struct Data data;
 char *msg;
 
 boolean alreadyConnected[2] ; // whether or not the client was connected previously
@@ -34,6 +55,11 @@ void setup()
 {
     delay(1000);
     Serial.begin(115200);
+    
+    pinMode(gas_din,INPUT);          
+    pinMode(gas_ain,INPUT); 
+    dht.setup(DHTpin, DHTesp::DHT11); //for DHT11 Connect DHT sensor to GPIO 17
+    
     Serial.println();
     Serial.println("\nConfiguring access point...");
     WiFi.mode(WIFI_AP);
@@ -103,10 +129,6 @@ void reconnect() {
     // Attempt to connect
     if (client_mqtt.connect(clientId.c_str())) {
       Serial.println("connected");
-      // Once connected, publish an announcement...
-      client_mqtt.publish("sdt_wifi", "hello");
-      // ... and resubscribe
-      client_mqtt.subscribe("sdt_wifi");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client_mqtt.state());
@@ -158,13 +180,51 @@ void loop()
       if (!client_mqtt.connected()) {
         reconnect();
       }
-        client_mqtt.loop();
+      
+      bme.begin();
+      Serial.println(digitalRead(gas_din));
+      if(digitalRead(gas_din)==0){
+         valueGas = analogRead(gas_ain);
+         Serial.print("KhiGas:");
+         Serial.println(valueGas);
+      }
+      
+      valueTemp =  dht.getTemperature();
+      valueHum = dht.getHumidity();
+      valuePres = bme.readPressure();
+      if (valuePres_temp == valuePres)
+      {
+        valuePres = -1;
+      }else {
+        valuePres_temp = valuePres;
+      }
+     // Serial.println("{\"id\":37,\"data\":45}"); //gửi dữ liệu cho Arduino thứ 2
 
-       long now = millis();
-       if (now - lastMsg > 2000) {
-          client_mqtt.publish("sdt_wifi", "hello");
-          delay(5000);
-       }
+      stringData = "{\"id\":";
+      stringData += idNode;
+      /*temp*/
+      stringData += ",\"t\":\"";
+      stringData += valueTemp;
+      /*humidity*/
+      stringData += "\",\"h\":\"";
+      stringData += valueHum;
+      /*gas air*/
+      stringData += "\",\"g\":";
+      stringData += valueGas;
+      /*pressure*/
+      stringData += ",\"p\":";
+      stringData += valuePres; 
+      stringData += '}';
+      client_mqtt.loop();
+      memset(temp,0,60);
+      stringData.toCharArray(temp, stringData.length()+1);
+      Serial.println(temp);
+      long now = millis();
+      if (now - lastMsg > 2000) {
+         lastMsg = now;
+         client_mqtt.publish("data_wifi", temp);
+         delay(5000);
+      }
     }  
   }
 }
