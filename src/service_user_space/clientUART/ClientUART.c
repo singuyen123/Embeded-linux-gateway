@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
       {
         printf("Error reading2: %s", strerror(errno));
       }
-      else if(num_bytes1>43){
+      else if(num_bytes1>41){
         count++;
         parsed_json = json_tokener_parse(msg);
         json_object_object_get_ex(parsed_json, "id", &idNode);

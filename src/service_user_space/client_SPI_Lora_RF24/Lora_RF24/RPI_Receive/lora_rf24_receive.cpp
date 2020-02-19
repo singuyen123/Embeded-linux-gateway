@@ -80,8 +80,8 @@ void delivered(void *context, MQTTClient_deliveryToken dt)
 
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
-  int i;
-  char *payloadptr;
+ // int i;
+  //char *payloadptr;
 
   printf("Message arrived\n");
   printf("     topic: %s %d\n", topicName, sizeof(topicName));
@@ -132,31 +132,59 @@ void timer_handler(void)
 
 void timer_handler_lora(void)
 {
-    countLora = 3;
+    printf("----------------------------------timeoutLora------------------------\n");
+    countLora = 10;
 }
 void rx_f(rxData *rx)
 {
-    publish_mess("data_lora",rx->buf);
+    
     parsed_json = json_tokener_parse(rx->buf);
     json_object_object_get_ex(parsed_json, "id", &idNode);
-    checkResponse = json_object_get_int(idNode);
+    checkResponse = json_object_get_int(idNode); 
     printf("checkResponseLora = %d\n", checkResponse);
 
     if (checkResponse == idLora)
     {
         countLora++;
-        data.node = kLora;
-        strcpy(data.packet.lora.msg, rx->buf);
-        rc = send(sockfd, &data, sizeof(data), 0);
-        if (rc <= 0)
-        {
-            printf("send error: %s\n", strerror(errno));
-        }
+        publish_mess("data_lora",rx->buf);
+  
     }
+
+
+}
+
+void timer_reset_all_lora(void)
+{
+    printf("*****!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!///////////////////////***************Reset Lora******************!!!!!!!!!****///////////////*****");
+    gpioSetMode(gpio_A, PI_OUTPUT);
+    gpioSetMode(gpio_B, PI_OUTPUT);
+    gpioSetMode(gpio_C, PI_OUTPUT);
+    gpioSetMode(gpio_26, PI_OUTPUT);
+
+    memset(lorabuff, '\0', sizeof(lorabuff));
+   // memset(rx_f, '\0', sizeof(rx_f));
+
+    modem.spiCS = 0; //Raspberry SPI CE pin number
+    modem.rx.callback = rx_f;
+    modem.rx.data.buf = lorabuff;
+    modem.eth.preambleLen = 6;
+    modem.eth.bw = BW62_5;            //Bandwidth 62.5KHz
+    modem.eth.sf = SF7;               //Spreading Factor 12
+    modem.eth.ecr = CR8;              //Error coding rate CR4/8
+    modem.eth.freq = 433000000;       // 434.8MHz
+    modem.eth.resetGpioN = 4;         //GPIO4 on lora RESET pi
+    modem.eth.dio0GpioN = 17;         //GPIO17 on lora DIO0 pin to control Rxdone and Txdone interrupts
+    modem.eth.outPower = OP20;        //Output power
+    modem.eth.powerOutPin = PA_BOOST; //Power Amplifire pin
+    modem.eth.AGC = 1;                //Auto Gain Control
+    modem.eth.OCP = 240;              // 45 to 240 mA. 0 to turn off protection
+    modem.eth.implicitHeader = 0;     //Explicit header mode
+    modem.eth.syncWord = 0x12;
 }
 
 int main(int argc, char **argv)
 {
+
 
     int select = 0;
     MQTTClient_create(&client, ADDRESS, CLIENTID,
@@ -203,36 +231,17 @@ int main(int argc, char **argv)
     modem.eth.implicitHeader = 0;     //Explicit header mode
     modem.eth.syncWord = 0x12;
 
+    // printf("start timer reset lora\n");
+    // if (start_timer(125000, &timer_reset_all_lora))
+    // {
+    //      printf("\n timer error\n");
+    // }
+
     while (1)
     {
         switch (select)
         {
         case 0:
-           // printf("------------Lora------------- 02\n");
-            // gpioWrite(gpio_A, 0);
-            // gpioWrite(gpio_B, 0);
-            // gpioWrite(gpio_C, 0);
-            // gpioWrite(gpio_26, 0);
-
-            // LoRa_begin(&modem);
-            // LoRa_receive(&modem);
-
-            // if (start_timer(2000, &timer_handler_lora))
-            // {
-            //     printf("\n timer error\n");
-            // }
-
-            // while (1)
-            // {
-            //     if (countLora > 2)
-            //     {
-            //         break;
-            //     }
-            // }
-            // stop_timer();
-            // countLora = 0;
-            // LoRa_end(&modem);
-            // gpioWrite(gpio_26, 1);
             break;
 
 		/*RF24_01 CH07*/
@@ -267,8 +276,8 @@ int main(int argc, char **argv)
                     if (checkResponse == idRF24)
                     {
                         printf("%s\n",nrfbuff);
-			publish_mess("data_rf",nrfbuff);
-		        count++;
+			            publish_mess("data_rf",nrfbuff);
+		               count++;
                     }
                 }
             }
@@ -277,7 +286,7 @@ int main(int argc, char **argv)
             radio.stopListening();
             radio.closeReadingPipe(0);
             radio.powerDown();
-            gpioWrite(gpio_26, 0);
+          //  gpioWrite(gpio_26, 0);
             break;
         }
         case 2:
@@ -303,9 +312,10 @@ int main(int argc, char **argv)
                 }
             }
             stop_timer();
+            printf("Count lora : %d ----------------\n",countLora);
             countLora = 0;
+
             LoRa_end(&modem);
-            gpioWrite(gpio_26, 1);
             break;
 
 		/*RF24_02 CH03*/
@@ -315,6 +325,7 @@ int main(int argc, char **argv)
             gpioWrite(gpio_A, 1);
             gpioWrite(gpio_B, 1);
             gpioWrite(gpio_C, 0);
+            gpioWrite(gpio_26, 1);
 
             radio.begin();
             radio.openReadingPipe(0, address);
@@ -337,7 +348,7 @@ int main(int argc, char **argv)
                     if (checkResponse == idRF24)
                     {
                         publish_mess("data_rf",nrfbuff);
-		        count++;
+		                 count++;
                     }
                 }
             }
@@ -346,7 +357,7 @@ int main(int argc, char **argv)
             radio.stopListening();
             radio.closeReadingPipe(0);
             radio.powerDown();
-            gpioWrite(gpio_26, 0);
+           // gpioWrite(gpio_26, 0);
             break;
         }
         case 4:
@@ -374,7 +385,7 @@ int main(int argc, char **argv)
             stop_timer();
             countLora = 0;
             LoRa_end(&modem);
-            gpioWrite(gpio_26, 1);
+          //  gpioWrite(gpio_26, 1);
             break;
 		/*RF24_00 CH05*/
         case 5:
@@ -383,6 +394,7 @@ int main(int argc, char **argv)
             gpioWrite(gpio_A, 1);
             gpioWrite(gpio_B, 0);
             gpioWrite(gpio_C, 1);
+            gpioWrite(gpio_26, 1);
 
             radio.begin();
             radio.openReadingPipe(0, address);
@@ -406,8 +418,8 @@ int main(int argc, char **argv)
                     //printf("Received _RF24_00 --- : %s\n", nrfbuff);
                     if (checkResponse == idRF24)
                     {
-			printf("%s\n",nrfbuff);
-			publish_mess("data_rf",nrfbuff);
+			            printf("%s\n",nrfbuff);
+			            publish_mess("data_rf",nrfbuff);
                         count++;
                     }
                 }
@@ -417,7 +429,7 @@ int main(int argc, char **argv)
             radio.stopListening();
             radio.closeReadingPipe(0);
             radio.powerDown();
-            gpioWrite(gpio_26, 0);
+           // gpioWrite(gpio_26, 0);
             break;
         }
         }
