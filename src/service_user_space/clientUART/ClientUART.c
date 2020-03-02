@@ -23,8 +23,8 @@
 #define idBlue 97
 
 /* define for mqtt_client */
-#define ADDRESS "test.mosquitto.org"
-#define CLIENTID "ExampleClientSub1"
+#define ADDRESS "broker.hivemq.com"
+#define CLIENTID "uart_bluetooth"
 #define TOPIC "presence"
 #define PAYLOAD "Hello World!"
 #define QOS 1
@@ -65,7 +65,7 @@ void timer_handler(void)
 volatile MQTTClient_deliveryToken deliveredtoken;
 
 void delivered(void *context, MQTTClient_deliveryToken dt) {
-  printf("Message with token value %d delivery confirmed\n", dt);
+ printf( "Message with token value %d delivery confirmed\n", dt);
   deliveredtoken = dt;
 }
 
@@ -73,9 +73,9 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   int i;
   char *payloadptr;
 
-  printf("Message arrived\n");
-  printf("     topic: %s %d\n", topicName, sizeof(topicName));
-  printf("   message: ");
+ printf( "Message arrived\n");
+ printf( "     topic: %s %d\n", topicName, sizeof(topicName));
+ printf( "   message: ");
 
   //payloadptr = message->payload;
   //for (i = 0; i < message->payloadlen; i++) {
@@ -91,8 +91,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 }
 
 void connlost(void *context, char *cause) {
-  printf("\nConnection lost\n");
-  printf("     cause: %s\n", cause);
+ printf( "\nConnection lost\n");
+ printf( "     cause: %s\n", cause);
 }
 
 void publish_mess(char *topic, char *msg) {
@@ -101,13 +101,13 @@ void publish_mess(char *topic, char *msg) {
   pubmsg.qos = QOS;
   pubmsg.retained = 0;
   MQTTClient_publishMessage(client, topic, &pubmsg, &token);
-  printf("Waiting for up to %d seconds for publication of %s\n"
+ printf( "Waiting for up to %d seconds for publication of %s\n"
          "on topic %s for client with ClientID: %s\n",
          (int)(TIMEOUT / 1000), PAYLOAD, topic, CLIENTID);
   //while (!rc) {
   //  rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
   //}
-  printf("Message with delivery token %d delivered\n", token);
+ printf( "Message with delivery token %d delivered\n", token);
 }
 
 int count=0;
@@ -122,12 +122,12 @@ int main(int argc, char *argv[])
   MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, delivered);
 
   if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS) {
-    printf("Failed to connect, return code %d\n", rc);
+   printf( "Failed to connect, return code %d\n", rc);
     exit(EXIT_FAILURE);
   }
   if (start_timer(500, &timer_handler))
   {
-    printf("\n timer error\n");
+   printf( "\n timer error\n");
     //continue;
   }
 
@@ -139,20 +139,20 @@ int main(int argc, char *argv[])
       int num_bytes1;
       memset(&msg, '\0', sizeof(msg));
       num_bytes1 = read(fd, msg, sizeof(msg));
-      printf("num_bytes1 %d . Received message---- : %s\n", num_bytes1, msg);
+     printf( "num_bytes1 %d . Received message---- : %s\n", num_bytes1, msg);
       if (num_bytes1 < 0)
       {
-        printf("Error reading2: %s", strerror(errno));
+       printf( "Error reading2: %s", strerror(errno));
       }
       else if(num_bytes1>41){
         count++;
         parsed_json = json_tokener_parse(msg);
         json_object_object_get_ex(parsed_json, "id", &idNode);
         checkResponse = json_object_get_int(idNode);
-        printf("checkResponse_Blue = %d\n",checkResponse);
+       printf( "checkResponse_Blue = %d\n",checkResponse);
         if(checkResponse == idBlue)
           publish_mess("data_bl",msg);
-        printf("count %d . Received message---- : %s\n", count, msg);
+       printf( "count %d . Received message---- : %s\n", count, msg);
       }
         fflush (stdout);
     }

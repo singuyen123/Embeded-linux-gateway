@@ -57,10 +57,10 @@ interrupt.o: $(DRIVER_DIR)/interrupt.c
 	$(CXX) -fPIC $(CFLAGS) -c $(DRIVER_DIR)/interrupt.c
 
 LoRa.o: LoRa.c
-	gcc -c LoRa.c -o LoRa.o -lpigpio -lrt -pthread -lm
+	gcc -c LoRa.c -o LoRa.o -lpigpio -lrt -pthread -lm -Wall
 
 timer.o: timer.c
-	gcc -c timer.c -o timer.o -lrt -pthread -lm 
+	gcc -c timer.c -o timer.o -lrt -pthread -lm -Wall
 	
 # clear configuration files
 cleanconfig:
